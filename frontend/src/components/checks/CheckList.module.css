@@ -1,0 +1,136 @@
+/* Check List Table Styles - Same pattern as PaymentList */
+
+.checkList {
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+}
+
+.checksTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.checksTable thead {
+  background: var(--background);
+  border-bottom: 2px solid var(--border);
+}
+
+.checksTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-medium);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checksTable tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s ease;
+}
+
+.checksTable tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.checksTable td {
+  padding: 14px 16px;
+  color: var(--text-dark);
+}
+
+.checkNumber {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.amount {
+  font-weight: 700;
+  color: var(--success-color);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusPending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusCleared {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusBounced {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.statusCancelled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btnSmall {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btnEdit {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btnEdit:hover {
+  background: var(--primary-hover);
+}
+
+.btnDelete {
+  background: var(--error-color);
+  color: white;
+}
+
+.btnDelete:hover {
+  background: #dc2626;
+}
+
+.btnSuccess {
+  background: var(--success-color);
+  color: white;
+}
+
+.btnSuccess:hover {
+  background: #059669;
+}
+
+.btnWarning {
+  background: var(--warning-color);
+  color: white;
+}
+
+.btnWarning:hover {
+  background: #d97706;
+}

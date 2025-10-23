@@ -1,0 +1,323 @@
+/* ============================================================================
+   User List - Modern Table Design
+   ============================================================================ */
+
+.userList {
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* Table */
+.usersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.usersTable thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 2px solid var(--border);
+}
+
+.usersTable th {
+  padding: 18px 20px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.usersTable th:last-child {
+  text-align: right;
+}
+
+.usersTable td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--text-dark);
+  vertical-align: middle;
+}
+
+.usersTable tbody tr {
+  transition: all 0.2s ease;
+}
+
+.usersTable tbody tr:hover {
+  background: linear-gradient(90deg, #f9fafb 0%, rgba(102, 126, 234, 0.03) 100%);
+  transform: translateX(2px);
+}
+
+.usersTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* User Avatar and Info */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userAvatar span {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 15px;
+  margin: 0 0 4px 0;
+}
+
+.userEmail {
+  color: var(--text-medium);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Role Badges */
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.roleBadge.admin {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  color: #6b21a8;
+}
+
+.roleBadge.manager {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.roleBadge.salesOfficer {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.roleBadge.warehouseStaff {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+.roleBadge.accountant {
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  color: #9a3412;
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.statusBadge.active {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.statusBadge.inactive {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+/* Department and Date Text */
+.departmentText {
+  color: var(--text-medium);
+  font-size: 14px;
+}
+
+.dateText {
+  color: var(--text-medium);
+  font-size: 13px;
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.btnAction {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.btnAction.edit {
+  color: var(--primary-color);
+}
+
+.btnAction.edit:hover {
+  color: var(--primary-hover);
+  transform: translateX(-2px);
+}
+
+.btnAction.deactivate {
+  color: var(--error-color);
+}
+
+.btnAction.deactivate:hover {
+  color: #dc2626;
+  transform: translateX(-2px);
+}
+
+.btnAction.activate {
+  color: var(--success-color);
+}
+
+.btnAction.activate:hover {
+  color: #059669;
+  transform: translateX(-2px);
+}
+
+/* No Users State */
+.noUsers {
+  padding: 80px 32px;
+  text-align: center;
+  color: var(--text-medium);
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 12px;
+}
+
+.noUsers::before {
+  content: '👤';
+  display: block;
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.noUsers p {
+  font-size: 14px;
+  margin: 0;
+  color: var(--text-medium);
+}
+
+/* Row Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.usersTable tbody tr {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .usersTable {
+    font-size: 13px;
+  }
+
+  .usersTable th,
+  .usersTable td {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .userList {
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+
+  .usersTable {
+    min-width: 900px;
+  }
+
+  .usersTable th,
+  .usersTable td {
+    padding: 12px 14px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Scrollbar styling */
+  .userList::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .userList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  .userList::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+  }
+
+  .userList::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .usersTable thead {
+    background: #f9fafb;
+  }
+
+  .actions,
+  .btnAction {
+    display: none;
+  }
+
+  .usersTable tbody tr:hover {
+    background: none;
+    transform: none;
+  }
+}

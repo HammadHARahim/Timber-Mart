@@ -1,0 +1,9 @@
+2025-10-19 13:20:41 [error]: GET /api/orders?page=1&limit=10 500 - 22ms
+2025-10-19 18:58:43 [error]: GET /api/orders?limit=100&status=APPROVED 500 - 28ms
+2025-10-19 18:58:43 [error]: GET /api/orders?limit=100&status=APPROVED 500 - 18ms
+2025-10-19 18:59:45 [error]: GET /api/orders?limit=100&status=APPROVED 500 - 48ms
+2025-10-19 18:59:45 [error]: GET /api/orders?limit=100&status=APPROVED 500 - 20ms
+2025-10-19 19:05:13 [error]: POST /api/tokens 500 - 84ms
+2025-10-19 23:36:41 [error]: POST /api/tokens 500 - 89ms
+2025-10-20 07:27:53 [error]: PUT /api/print/settings 500 - 28ms
+2025-10-20 08:10:02 [error]: PUT /api/print/settings 500 - 16ms

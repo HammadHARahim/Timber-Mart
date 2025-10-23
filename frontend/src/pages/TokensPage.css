@@ -1,0 +1,78 @@
+/* ============================================================================
+   FILE: src/pages/TokensPage.css
+   Tokens page styles - Uses common.css patterns
+   ============================================================================ */
+
+.tokens-page {
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+/* Override common page-header for full-width style */
+.tokens-page .page-header {
+  background: var(--surface);
+  padding: 25px 30px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tokens-page .page-header h1 {
+  margin: 0 0 5px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Compact button style matching UsersPage */
+.btn-add-token {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-add-token:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-add-token:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-add-token:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tokens-page .page-content {
+  padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tokens-page .page-header {
+    padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .btn-add-token {
+    width: 100%;
+    justify-content: center;
+  }
+}

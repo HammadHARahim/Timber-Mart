@@ -1,0 +1,28 @@
+/* ============================================================================
+   FILE: src/pages/PrintSettingsPage.css
+   Print settings page styles - Uses common.css patterns
+   ============================================================================ */
+
+.print-settings-page {
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+/* Override common page-header for full-width style */
+.print-settings-page .page-header {
+  background: var(--surface);
+  padding: 25px 30px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.print-settings-page .page-content {
+  padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .print-settings-page .page-header {
+    padding: 20px;
+  }
+}

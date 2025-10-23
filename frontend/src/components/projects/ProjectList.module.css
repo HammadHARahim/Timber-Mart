@@ -1,0 +1,159 @@
+/* Project List Table Styles */
+
+.projectList {
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+}
+
+.projectsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.projectsTable thead {
+  background: var(--background);
+  border-bottom: 2px solid var(--border);
+}
+
+.projectsTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-medium);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.projectsTable tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s ease;
+}
+
+.projectsTable tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.projectsTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.projectsTable td {
+  padding: 14px 16px;
+  color: var(--text-dark);
+}
+
+.projectId {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.projectName {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.balance {
+  font-weight: 700;
+  color: var(--success-color);
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.statusPlanned {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusInProgress {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.statusCompleted {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusOnHold {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusCancelled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btnSmall {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btnEdit {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btnEdit:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btnDelete {
+  background: var(--error-color);
+  color: white;
+}
+
+.btnDelete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .projectsTable {
+    font-size: 12px;
+  }
+
+  .projectsTable th,
+  .projectsTable td {
+    padding: 10px 12px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .btnSmall {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}

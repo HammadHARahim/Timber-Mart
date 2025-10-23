@@ -1,0 +1,313 @@
+/* ============================================================================
+   Customer List - Modern Table Design
+   ============================================================================ */
+
+.customerList {
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* Table */
+.customersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.customersTable thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 2px solid var(--border);
+}
+
+.customersTable th {
+  padding: 18px 20px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.customersTable td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--text-dark);
+  vertical-align: middle;
+}
+
+.customersTable tbody tr {
+  transition: all 0.2s ease;
+}
+
+.customersTable tbody tr:hover {
+  background: linear-gradient(90deg, #f9fafb 0%, rgba(102, 126, 234, 0.03) 100%);
+  transform: translateX(2px);
+}
+
+.customersTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Column Specific Styling */
+.customerName {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 15px;
+}
+
+.customerPhone {
+  font-family: 'Courier New', monospace;
+  color: var(--text-medium);
+}
+
+.customerEmail {
+  color: var(--primary-color);
+  font-size: 13px;
+}
+
+.balance {
+  color: var(--success-color);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.balance.negative {
+  color: var(--error-color);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badgeRegular {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.badgeNew {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.badgePremium {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  color: #9f1239;
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btnSmall {
+  padding: 8px 16px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btnEdit {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btnEdit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btnDelete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.btnDelete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btnSmall:active {
+  transform: translateY(0);
+}
+
+/* No Customers State */
+.noCustomers {
+  padding: 80px 32px;
+  text-align: center;
+  color: var(--text-medium);
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 12px;
+}
+
+.noCustomers::before {
+  content: '👥';
+  display: block;
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.noCustomers h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0 0 8px 0;
+}
+
+.noCustomers p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Table Stats Footer */
+.tableStats {
+  padding: 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-top: 2px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 24px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--text-medium);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.statValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Row Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.customersTable tbody tr {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .customersTable {
+    font-size: 13px;
+  }
+
+  .customersTable th,
+  .customersTable td {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .customerList {
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+
+  .customersTable {
+    min-width: 800px;
+  }
+
+  .customersTable th,
+  .customersTable td {
+    padding: 12px 14px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .btnSmall {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 12px;
+  }
+
+  /* Scrollbar styling */
+  .customerList::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .customerList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  .customerList::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+  }
+
+  .customerList::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+  }
+}
+
+@media (max-width: 640px) {
+  .tableStats {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .customersTable thead {
+    background: #f9fafb;
+  }
+
+  .actions,
+  .btnSmall {
+    display: none;
+  }
+
+  .customersTable tbody tr:hover {
+    background: none;
+    transform: none;
+  }
+}

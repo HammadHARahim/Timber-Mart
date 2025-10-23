@@ -1,0 +1,126 @@
+/* ============================================================================
+   FILE: src/components/print/PrintSettings.css
+   Print settings component styles
+   ============================================================================ */
+
+.print-settings-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.print-settings-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-medium);
+  font-size: 16px;
+}
+
+.print-settings-form {
+  background: var(--surface);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.settings-header {
+  padding: 25px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--background);
+}
+
+.settings-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 26px;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.settings-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-medium);
+}
+
+/* Note: error-message and success-message styles are now in common.css */
+
+/* Settings Sections */
+.settings-section {
+  padding: 25px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.section-description {
+  font-size: 14px;
+  color: var(--text-medium);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* Note: form-group, form-row, and checkbox-group styles are now in common.css */
+
+/* Logo Preview */
+.logo-preview {
+  margin-top: 10px;
+  padding: 15px;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.logo-preview img {
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 25px;
+  background-color: var(--background);
+  border-top: 1px solid var(--border);
+}
+
+/* Note: .btn styles are now in common.css */
+
+/* Responsive */
+@media (max-width: 768px) {
+  .print-settings-container {
+    padding: 10px;
+  }
+
+  .settings-header {
+    padding: 20px;
+  }
+
+  .settings-section {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}

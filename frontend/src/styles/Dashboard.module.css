@@ -1,0 +1,224 @@
+/* ============================================================================
+   Dashboard Page Content Styling
+   ============================================================================ */
+
+.dashboardPage {
+  padding: 24px 28px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.welcomeSection {
+  margin-bottom: 24px;
+}
+
+.welcomeSection h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 8px 0;
+}
+
+.welcomeSection .subtitle {
+  font-size: 16px;
+  color: var(--text-medium);
+  margin: 0;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.statIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.statIcon.customers {
+  background: rgba(102, 126, 234, 0.12);
+  color: var(--primary-color);
+}
+
+.statIcon.orders {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning-color);
+}
+
+.statIcon.revenue {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success-color);
+}
+
+.statIcon.projects {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--info-color);
+}
+
+.statInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.statInfo h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-medium);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 4px 0;
+  line-height: 1;
+}
+
+.statChange {
+  font-size: 13px;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* User Info Card */
+.userInfoCard {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  max-width: 600px;
+}
+
+.userInfoCard h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 24px 0;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.infoRow .label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-medium);
+}
+
+.infoRow .value {
+  font-size: 15px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardPage {
+    padding: 20px 16px;
+  }
+
+  .welcomeSection h2 {
+    font-size: 24px;
+  }
+
+  .welcomeSection .subtitle {
+    font-size: 14px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .statCard {
+    padding: 20px;
+  }
+
+  .statIcon {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+
+  .statValue {
+    font-size: 28px;
+  }
+
+  .userInfoCard {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcomeSection h2 {
+    font-size: 20px;
+  }
+
+  .statCard {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .statIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .statInfo h3 {
+    font-size: 11px;
+  }
+
+  .statValue {
+    font-size: 24px;
+  }
+}
