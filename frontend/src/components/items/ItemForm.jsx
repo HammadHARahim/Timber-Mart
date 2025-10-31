@@ -9,7 +9,6 @@ import {
   Button,
   Typography,
   Paper,
-  Grid,
   Divider,
   IconButton,
   Table,
@@ -19,7 +18,6 @@ import {
   TableHead,
   TableRow,
   Alert,
-  Stack,
   Chip,
 } from '@mui/material';
 import {
@@ -27,7 +25,6 @@ import {
   Cancel as CancelIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
 
@@ -62,7 +59,18 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
         sku: item.sku || '',
       });
       setShortcuts(item.shortcuts || []);
+    } else {
+      setFormData({
+        name: '',
+        unit: '',
+        default_price: '',
+        category: '',
+        description: '',
+        sku: '',
+      });
+      setShortcuts([]);
     }
+    setErrors({});
   }, [item]);
 
   const handleChange = (e) => {
@@ -98,7 +106,6 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
       {
         ...newShortcut,
         quantity: parseInt(newShortcut.quantity) || 1,
-        isNew: true, // Mark as new for UI purposes
       },
     ]);
 
@@ -160,179 +167,208 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
     }
   };
 
+  const handleCancel = () => {
+    setFormData({
+      name: '',
+      unit: '',
+      default_price: '',
+      category: '',
+      description: '',
+      sku: '',
+    });
+    setShortcuts([]);
+    setNewShortcut({ shortcut_code: '', quantity: 1, description: '' });
+    setErrors({});
+    onCancel();
+  };
+
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom fontWeight={700}>
-          <InventoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-          {item ? 'Edit Item' : 'Create New Item'}
+    <Paper elevation={0} sx={{ maxWidth: 800, width: '100%' }}>
+      {/* Header */}
+      <Box sx={{ p: 3, pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          <InventoryIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          <Typography variant="h5" fontWeight={700}>
+            {item ? 'Edit Item' : 'Create New Item'}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {item
+            ? 'Update item details and manage shortcuts'
+            : 'Add a new item to the inventory with optional shortcuts'}
         </Typography>
-        <Divider />
       </Box>
 
+      <Divider />
+
+      {/* Error Alert */}
       {errors.submit && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {errors.submit}
-        </Alert>
+        <Box sx={{ px: 3, pt: 2 }}>
+          <Alert severity="error" onClose={() => setErrors((prev) => ({ ...prev, submit: '' }))}>
+            {errors.submit}
+          </Alert>
+        </Box>
       )}
 
-      <form onSubmit={handleSubmit}>
+      {/* Form */}
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 3 }}>
         {/* Section 1: Item Details */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
             Item Details
           </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <TextField
+              fullWidth
+              required
+              label="Item Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              error={!!errors.name}
+              helperText={errors.name || 'Name of the product or material'}
+              disabled={isSubmitting}
+            />
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
-                label="Item Name *"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                error={!!errors.name}
-                helperText={errors.name}
                 fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                label="Unit *"
+                required
+                label="Unit"
                 name="unit"
                 value={formData.unit}
                 onChange={handleChange}
                 error={!!errors.unit}
-                helperText={errors.unit || 'e.g., piece, meter, kg'}
-                fullWidth
+                helperText={errors.unit || 'e.g., piece, meter, kg, bundle'}
+                disabled={isSubmitting}
               />
-            </Grid>
-            <Grid item xs={12} md={3}>
+
               <TextField
-                label="Price *"
+                fullWidth
+                required
+                label="Price"
                 name="default_price"
                 type="number"
                 value={formData.default_price}
                 onChange={handleChange}
                 error={!!errors.default_price}
-                helperText={errors.default_price}
-                fullWidth
+                helperText={errors.default_price || 'Default selling price'}
+                disabled={isSubmitting}
                 inputProps={{ min: 0, step: '0.01' }}
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
+                fullWidth
                 label="Category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 helperText="e.g., timber, plywood, hardware"
-                fullWidth
+                disabled={isSubmitting}
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
+
               <TextField
+                fullWidth
                 label="SKU"
                 name="sku"
                 value={formData.sku}
                 onChange={handleChange}
-                helperText="Stock Keeping Unit"
-                fullWidth
+                helperText="Stock Keeping Unit (optional)"
+                disabled={isSubmitting}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                multiline
-                rows={2}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
+            </Box>
+
+            <TextField
+              fullWidth
+              label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              multiline
+              rows={2}
+              disabled={isSubmitting}
+              helperText="Additional details about this item"
+            />
+          </Box>
         </Box>
 
         <Divider sx={{ my: 3 }} />
 
         {/* Section 2: Shortcut Management */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Shortcuts
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Shortcuts
+            </Typography>
             <Chip
-              label={`${shortcuts.length} shortcuts`}
+              label={`${shortcuts.length} shortcut${shortcuts.length !== 1 ? 's' : ''}`}
               size="small"
               color="secondary"
-              sx={{ ml: 2 }}
             />
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Add shortcut codes for quick item entry in orders
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+            Add shortcut codes for quick item entry when creating orders
           </Typography>
 
           {/* Add Shortcut Form */}
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2.5 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 label="Shortcut Code"
                 name="shortcut_code"
                 value={newShortcut.shortcut_code}
                 onChange={handleShortcutChange}
                 error={!!errors.shortcut_code}
-                helperText={errors.shortcut_code || 'e.g., PINE2X4'}
-                fullWidth
+                helperText={errors.shortcut_code || 'e.g., PINE2X4, OAK-1M'}
                 size="small"
+                sx={{ flex: 1 }}
               />
-            </Grid>
-            <Grid item xs={12} md={2}>
               <TextField
                 label="Quantity"
                 name="quantity"
                 type="number"
                 value={newShortcut.quantity}
                 onChange={handleShortcutChange}
-                fullWidth
                 size="small"
+                sx={{ width: 120 }}
                 inputProps={{ min: 1 }}
               />
-            </Grid>
-            <Grid item xs={12} md={4}>
               <TextField
                 label="Description (optional)"
                 name="description"
                 value={newShortcut.description}
                 onChange={handleShortcutChange}
-                fullWidth
                 size="small"
+                sx={{ flex: 1 }}
               />
-            </Grid>
-            <Grid item xs={12} md={2}>
               <Button
-                variant="contained"
+                variant="outlined"
                 startIcon={<AddIcon />}
                 onClick={handleAddShortcut}
-                fullWidth
-                sx={{ height: '40px' }}
+                sx={{ height: 40 }}
               >
                 Add
               </Button>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* Shortcuts List */}
           {shortcuts.length > 0 ? (
-            <TableContainer>
+            <TableContainer sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
               <Table size="small">
-                <TableHead>
+                <TableHead sx={{ bgcolor: 'grey.50' }}>
                   <TableRow>
-                    <TableCell>Shortcut Code</TableCell>
-                    <TableCell>Quantity</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Shortcut Code</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Quantity</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {shortcuts.map((shortcut, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={index} hover>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
                           {shortcut.shortcut_code}
@@ -359,32 +395,34 @@ export default function ItemForm({ item, onSubmit, onCancel }) {
               </Table>
             </TableContainer>
           ) : (
-            <Alert severity="info">
-              No shortcuts added yet. Add shortcuts above for quick order entry.
+            <Alert severity="info" sx={{ mt: 1 }}>
+              No shortcuts added yet. Shortcuts are optional but useful for quick order entry.
             </Alert>
           )}
         </Box>
 
+        <Divider sx={{ my: 3 }} />
+
         {/* Action Buttons */}
-        <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
           <Button
             variant="outlined"
-            startIcon={<CancelIcon />}
-            onClick={onCancel}
+            onClick={handleCancel}
             disabled={isSubmitting}
+            startIcon={<CancelIcon />}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             variant="contained"
-            startIcon={<SaveIcon />}
             disabled={isSubmitting}
+            startIcon={<SaveIcon />}
           >
             {isSubmitting ? 'Saving...' : item ? 'Update Item' : 'Create Item'}
           </Button>
         </Box>
-      </form>
+      </Box>
     </Paper>
   );
 }
