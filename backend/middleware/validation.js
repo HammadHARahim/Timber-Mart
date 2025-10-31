@@ -18,8 +18,14 @@ export const handleValidationErrors = (req, res, next) => {
       value: err.value
     }));
 
+    console.log('=== VALIDATION FAILED ===');
+    console.log('URL:', req.method, req.url);
+    console.log('Error details:', JSON.stringify(errorDetails, null, 2));
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('========================');
+
     logger.warn(`Validation failed for ${req.method} ${req.url}`);
-    logger.warn('Validation errors:', JSON.stringify(errorDetails, null, 2));
+    logger.warn(`Validation errors: ${JSON.stringify(errorDetails)}`);
 
     return res.status(400).json({
       success: false,
@@ -65,7 +71,7 @@ export const validateOrder = [
     .notEmpty().withMessage('Customer ID is required')
     .isInt({ min: 1 }).withMessage('Invalid customer ID'),
   body('project_id')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isInt({ min: 1 }).withMessage('Invalid project ID'),
   body('status')
     .optional()
