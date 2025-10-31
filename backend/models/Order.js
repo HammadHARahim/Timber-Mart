@@ -64,6 +64,12 @@ const Order = sequelize.define('Order', {
     defaultValue: 0.00,
     comment: 'Remaining balance: final_amount - paid_amount'
   },
+  credit_applied: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0.00,
+    comment: 'Amount of customer credit applied to this order'
+  },
   status: {
     type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'),
     allowNull: false,

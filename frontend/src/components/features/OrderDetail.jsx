@@ -310,6 +310,16 @@ export default function OrderDetail({
                       ₨{parseFloat(order.final_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
                     </Typography>
                   </Grid>
+                  {parseFloat(order.credit_applied || 0) > 0 && (
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Credit Applied:
+                      </Typography>
+                      <Typography variant="h6" fontWeight={600} color="info.main">
+                        ₨{parseFloat(order.credit_applied || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                      </Typography>
+                    </Grid>
+                  )}
                   <Grid item xs={12} sm={6} md={4}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Paid Amount:

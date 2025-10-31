@@ -13,12 +13,16 @@ import {
   Alert,
   Divider,
   CircularProgress,
+  Checkbox,
+  FormControlLabel,
+  Chip,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Add as AddIcon,
   Edit as EditIcon,
+  AccountBalance as CreditIcon,
 } from '@mui/icons-material';
 import OrderItemsTable from './OrderItemsTable.jsx';
 
@@ -36,12 +40,14 @@ export default function OrderForm({
     delivery_date: '',
     delivery_address: '',
     notes: '',
-    items: []
+    items: [],
+    apply_credit: false
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredProjects, setFilteredProjects] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Initialize form with order data if editing
   useEffect(() => {
@@ -67,9 +73,12 @@ export default function OrderForm({
     setErrors({});
   }, [order]);
 
-  // Filter projects by selected customer
+  // Filter projects by selected customer and update selected customer info
   useEffect(() => {
     if (formData.customer_id) {
+      const customer = customers.find(c => c.id === parseInt(formData.customer_id));
+      setSelectedCustomer(customer);
+
       const customerProjects = projects.filter(
         p => p.customer_id === parseInt(formData.customer_id)
       );
@@ -84,10 +93,11 @@ export default function OrderForm({
         }
       }
     } else {
+      setSelectedCustomer(null);
       setFilteredProjects([]);
-      setFormData(prev => ({ ...prev, project_id: '' }));
+      setFormData(prev => ({ ...prev, project_id: '', apply_credit: false }));
     }
-  }, [formData.customer_id, projects]);
+  }, [formData.customer_id, projects, customers]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -156,6 +166,7 @@ export default function OrderForm({
         delivery_date: formData.delivery_date || null,
         delivery_address: formData.delivery_address.trim() || '',
         notes: formData.notes.trim() || '',
+        apply_credit: formData.apply_credit,
         items: formData.items.map(item => ({
           item_id: item.item_id,
           quantity: parseFloat(item.quantity),
@@ -261,6 +272,49 @@ export default function OrderForm({
               </MenuItem>
             ))}
           </TextField>
+
+          {/* Customer Credit Information and Application */}
+          {selectedCustomer && (
+            <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  Customer Balance:
+                </Typography>
+                <Chip
+                  icon={<CreditIcon />}
+                  label={`₨${parseFloat(selectedCustomer.balance || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}`}
+                  color={parseFloat(selectedCustomer.balance) < 0 ? 'success' : parseFloat(selectedCustomer.balance) > 0 ? 'error' : 'default'}
+                  size="small"
+                />
+              </Box>
+              {parseFloat(selectedCustomer.balance) < 0 && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    Available Credit: ₨{Math.abs(parseFloat(selectedCustomer.balance)).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.apply_credit}
+                        onChange={(e) => setFormData(prev => ({ ...prev, apply_credit: e.target.checked }))}
+                        color="success"
+                      />
+                    }
+                    label={
+                      <Typography variant="body2">
+                        Apply available credit to this order
+                      </Typography>
+                    }
+                  />
+                </Box>
+              )}
+              {parseFloat(selectedCustomer.balance) > 0 && (
+                <Typography variant="caption" color="error.main">
+                  Customer has an outstanding balance of ₨{Math.abs(parseFloat(selectedCustomer.balance)).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                </Typography>
+              )}
+            </Box>
+          )}
 
           {/* Project */}
           <TextField

@@ -14,10 +14,10 @@ class OrderService {
     const transaction = await sequelize.transaction();
 
     try {
-      const { customer_id, project_id, delivery_date, delivery_address, notes, items } = orderData;
+      const { customer_id, project_id, delivery_date, delivery_address, notes, items, apply_credit } = orderData;
 
       // Validate customer exists
-      const customer = await Customer.findByPk(customer_id);
+      const customer = await Customer.findByPk(customer_id, { transaction });
       if (!customer) {
         throw new Error('Customer not found');
       }
@@ -79,6 +79,31 @@ class OrderService {
 
       const final_amount = total_amount - discount_amount;
 
+      // Calculate credit application
+      let credit_applied = 0;
+      let paid_amount = 0;
+      let payment_status = 'UNPAID';
+
+      if (apply_credit && customer.balance < 0) {
+        // Customer has credit (negative balance)
+        const available_credit = Math.abs(customer.balance);
+        credit_applied = Math.min(available_credit, final_amount);
+        paid_amount = credit_applied;
+
+        // Update customer balance (increase it since we're using credit)
+        const new_balance = parseFloat(customer.balance) + credit_applied;
+        await customer.update({ balance: new_balance }, { transaction });
+
+        // Determine payment status
+        if (paid_amount >= final_amount) {
+          payment_status = 'PAID';
+        } else if (paid_amount > 0) {
+          payment_status = 'PARTIAL';
+        }
+      }
+
+      const balance_amount = final_amount - paid_amount;
+
       // Create order
       const order = await Order.create({
         order_id,
@@ -88,10 +113,11 @@ class OrderService {
         total_amount,
         discount_amount,
         final_amount,
-        paid_amount: 0,
-        balance_amount: final_amount,
+        paid_amount,
+        balance_amount,
+        credit_applied,
         status: 'PENDING',
-        payment_status: 'UNPAID',
+        payment_status,
         delivery_date,
         delivery_address,
         notes,
