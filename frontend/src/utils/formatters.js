@@ -155,3 +155,49 @@ export function parseCurrency(currencyString) {
   const cleaned = currencyString.replace(/[^\d.-]/g, '');
   return parseFloat(cleaned) || 0;
 }
+
+// Format balance with Credit/Debit indicator
+// Positive balance = Customer owes us (Debit - Green)
+// Negative balance = We owe customer (Credit - Red)
+export function formatBalance(balance) {
+  const amount = parseFloat(balance);
+
+  if (isNaN(amount)) {
+    return {
+      label: 'Balance',
+      amount: 0,
+      formatted: formatCurrency(0),
+      color: 'inherit',
+      type: 'neutral'
+    };
+  }
+
+  if (amount > 0) {
+    // Customer owes us money (Debit)
+    return {
+      label: 'Debit',
+      amount: amount,
+      formatted: formatCurrency(amount),
+      color: 'success', // Green in MUI
+      type: 'debit'
+    };
+  } else if (amount < 0) {
+    // We owe customer money (Credit)
+    return {
+      label: 'Credit',
+      amount: Math.abs(amount),
+      formatted: formatCurrency(Math.abs(amount)),
+      color: 'error', // Red in MUI
+      type: 'credit'
+    };
+  } else {
+    // Zero balance
+    return {
+      label: 'Balance',
+      amount: 0,
+      formatted: formatCurrency(0),
+      color: 'inherit',
+      type: 'neutral'
+    };
+  }
+}

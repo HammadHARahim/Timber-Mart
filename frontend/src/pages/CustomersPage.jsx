@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useCustomer } from '../hooks/useCustomer';
 import CustomerForm from '../components/features/CustomerForm';
+import { formatBalance } from '../utils/formatters';
 
 export default function CustomersPage() {
   const [showForm, setShowForm] = useState(false);
@@ -93,17 +94,25 @@ export default function CustomersPage() {
       {
         accessorKey: 'balance',
         header: 'Balance',
-        size: 130,
+        size: 150,
         Cell: ({ cell }) => {
-          const balance = parseFloat(cell.getValue() || 0);
+          const balanceInfo = formatBalance(cell.getValue());
           return (
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              color={balance < 0 ? 'error.main' : 'success.main'}
-            >
-              ₨{balance.toLocaleString('en-PK', { minimumFractionDigits: 2 })}
-            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Chip
+                label={balanceInfo.label}
+                color={balanceInfo.color}
+                size="small"
+                sx={{ fontWeight: 600, minWidth: 60 }}
+              />
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                color={`${balanceInfo.color}.main`}
+              >
+                {balanceInfo.formatted}
+              </Typography>
+            </Box>
           );
         },
       },
