@@ -78,184 +78,325 @@ export default function OrderDetail({
   };
 
   return (
-    <Box sx={{ py: 3 }}>
-      <Paper elevation={0} sx={{ p: 3 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              Order Details
-            </Typography>
-            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-              {order.order_id}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<BackIcon />}
-              onClick={onClose}
-            >
-              Back
-            </Button>
-            {canEdit && (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1300,
+        p: 2,
+      }}
+      onClick={onClose}
+    >
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          maxWidth: 1200,
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: 24,
+          '&::-webkit-scrollbar': {
+            width: '10px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+            margin: '8px 0',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.400',
+            borderRadius: '10px',
+            border: '2px solid',
+            borderColor: 'background.paper',
+            '&:hover': {
+              bgcolor: 'grey.600',
+            },
+          },
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Paper elevation={0} sx={{ p: 4 }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Order Details
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                {order.order_id}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={() => onEdit(order)}
+                startIcon={<BackIcon />}
+                onClick={onClose}
               >
-                Edit
+                Back
               </Button>
-            )}
-            {parseFloat(order.balance_amount) > 0 && (
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<PaymentIcon />}
-                onClick={() => setShowPaymentModal(true)}
-              >
-                Add Payment
-              </Button>
-            )}
+              {canEdit && (
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => onEdit(order)}
+                >
+                  Edit
+                </Button>
+              )}
+              {parseFloat(order.balance_amount) > 0 && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<PaymentIcon />}
+                  onClick={() => setShowPaymentModal(true)}
+                >
+                  Add Payment
+                </Button>
+              )}
+            </Box>
           </Box>
-        </Box>
-        <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 3 }} />
 
-        {/* Status and Payment Information */}
-        <div className="detail-section">
-          <h3>Status Information</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Order Status:</label>
-              <div className="status-display">
-                <StatusBadge status={order.status} type="order" />
-                {canEdit && (
-                  <button
-                    className="btn-link"
-                    onClick={() => setShowStatusModal(true)}
-                  >
-                    Change Status
-                  </button>
+          {/* Status and Payment Information */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Status Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Order Status:
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <StatusBadge status={order.status} type="order" />
+                  {canEdit && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => setShowStatusModal(true)}
+                    >
+                      Change
+                    </Button>
+                  )}
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Payment Status:
+                </Typography>
+                <StatusBadge status={order.payment_status} type="payment" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Order Date:
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(order.order_date).toLocaleDateString()}
+                </Typography>
+              </Grid>
+              {order.delivery_date && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Delivery Date:
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(order.delivery_date).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Customer and Project Information */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Customer & Project
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Customer:
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {order.customer?.name || 'N/A'}
+                </Typography>
+                {order.customer?.phone && (
+                  <Typography variant="body2" color="text.secondary">
+                    Phone: {order.customer.phone}
+                  </Typography>
                 )}
-              </div>
-            </div>
-            <div className="info-item">
-              <label>Payment Status:</label>
-              <StatusBadge status={order.payment_status} type="payment" />
-            </div>
-            <div className="info-item">
-              <label>Order Date:</label>
-              <span>{new Date(order.order_date).toLocaleDateString()}</span>
-            </div>
-            {order.delivery_date && (
-              <div className="info-item">
-                <label>Delivery Date:</label>
-                <span>{new Date(order.delivery_date).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-        </div>
+                {order.customer?.email && (
+                  <Typography variant="body2" color="text.secondary">
+                    Email: {order.customer.email}
+                  </Typography>
+                )}
+              </Grid>
+              {order.project && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Project:
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {order.project.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                    {order.project.project_id}
+                  </Typography>
+                </Grid>
+              )}
+              {order.delivery_address && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Delivery Address:
+                  </Typography>
+                  <Typography variant="body1">
+                    {order.delivery_address}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
 
-        {/* Customer and Project Information */}
-        <div className="detail-section">
-          <h3>Customer & Project</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Customer:</label>
-              <div>
-                <div className="customer-name">{order.customer?.name || 'N/A'}</div>
-                <div className="customer-details">
-                  {order.customer?.phone && <span>Phone: {order.customer.phone}</span>}
-                  {order.customer?.email && <span>Email: {order.customer.email}</span>}
-                </div>
-              </div>
-            </div>
-            {order.project && (
-              <div className="info-item">
-                <label>Project:</label>
-                <div>
-                  <div className="project-name">{order.project.name}</div>
-                  <div className="project-id">{order.project.project_id}</div>
-                </div>
-              </div>
-            )}
-            {order.delivery_address && (
-              <div className="info-item full-width">
-                <label>Delivery Address:</label>
-                <span>{order.delivery_address}</span>
-              </div>
-            )}
-          </div>
-        </div>
+          <Divider sx={{ my: 3 }} />
 
-        {/* Order Items */}
-        <div className="detail-section">
-          <h3>Order Items</h3>
-          <OrderItemsTable items={order.items || []} readOnly={true} />
-        </div>
+          {/* Order Items */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Order Items
+            </Typography>
+            <OrderItemsTable items={order.items || []} readOnly={true} />
+          </Box>
 
-        {/* Financial Summary */}
-        <div className="detail-section financial-summary">
-          <h3>Financial Summary</h3>
-          <div className="summary-grid">
-            <div className="summary-item">
-              <label>Total Amount:</label>
-              <span className="amount">₨{parseFloat(order.total_amount || 0).toFixed(2)}</span>
-            </div>
-            <div className="summary-item">
-              <label>Total Discount:</label>
-              <span className="amount discount">-₨{parseFloat(order.discount_amount || 0).toFixed(2)}</span>
-            </div>
-            <div className="summary-item">
-              <label>Final Amount:</label>
-              <span className="amount final">₨{parseFloat(order.final_amount || 0).toFixed(2)}</span>
-            </div>
-            <div className="summary-item">
-              <label>Paid Amount:</label>
-              <span className="amount paid">₨{parseFloat(order.paid_amount || 0).toFixed(2)}</span>
-            </div>
-            <div className="summary-item highlight">
-              <label>Balance Due:</label>
-              <span className="amount balance">₨{parseFloat(order.balance_amount || 0).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+          <Divider sx={{ my: 3 }} />
 
-        {/* Notes */}
-        {order.notes && (
-          <div className="detail-section">
-            <h3>Notes</h3>
-            <div className="notes-content">{order.notes}</div>
-          </div>
-        )}
+          {/* Financial Summary */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Financial Summary
+            </Typography>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+              <CardContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Amount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      ₨{parseFloat(order.total_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Discount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600} color="error.main">
+                      -₨{parseFloat(order.discount_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Final Amount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      ₨{parseFloat(order.final_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Paid Amount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600} color="success.main">
+                      ₨{parseFloat(order.paid_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Balance Due:
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color={parseFloat(order.balance_amount) > 0 ? 'error.main' : 'success.main'}
+                    >
+                      ₨{parseFloat(order.balance_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
 
-        {/* Metadata */}
-        <div className="detail-section metadata">
-          <h3>Additional Information</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Created By:</label>
-              <span>{order.creator?.full_name || order.creator?.username || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <label>Created At:</label>
-              <span>{new Date(order.created_at).toLocaleString()}</span>
-            </div>
-            {order.updated_at && (
-              <div className="info-item">
-                <label>Last Updated:</label>
-                <span>{new Date(order.updated_at).toLocaleString()}</span>
-              </div>
-            )}
-            <div className="info-item">
-              <label>Sync Status:</label>
-              <span className={`sync-status sync-${order.sync_status?.toLowerCase()}`}>
-                {order.sync_status || 'SYNCED'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* Notes */}
+          {order.notes && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Notes
+                </Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="body1">{order.notes}</Typography>
+                </Paper>
+              </Box>
+            </>
+          )}
+
+          {/* Metadata */}
+          <Divider sx={{ my: 3 }} />
+          <Box>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Additional Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Created By:
+                </Typography>
+                <Typography variant="body1">
+                  {order.creator?.full_name || order.creator?.username || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Created At:
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(order.created_at).toLocaleString()}
+                </Typography>
+              </Grid>
+              {order.updated_at && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Last Updated:
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(order.updated_at).toLocaleString()}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Sync Status:
+                </Typography>
+                <Chip
+                  label={order.sync_status || 'SYNCED'}
+                  size="small"
+                  color={order.sync_status === 'SYNCED' ? 'success' : 'warning'}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Paper>
+      </Box>
 
       {/* Status Change Modal */}
       <Dialog
@@ -377,7 +518,6 @@ export default function OrderDetail({
           </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
     </Box>
   );
 }
