@@ -12,15 +12,19 @@ const purify = DOMPurify(window);
 export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    logger.warn(`Validation failed for ${req.method} ${req.path}`, { errors: errors.array() });
+    const errorDetails = errors.array().map(err => ({
+      field: err.path,
+      message: err.msg,
+      value: err.value
+    }));
+
+    logger.warn(`Validation failed for ${req.method} ${req.url}`);
+    logger.warn('Validation errors:', JSON.stringify(errorDetails, null, 2));
+
     return res.status(400).json({
       success: false,
       error: 'Validation failed',
-      details: errors.array().map(err => ({
-        field: err.path,
-        message: err.msg,
-        value: err.value
-      }))
+      details: errorDetails
     });
   }
   next();
@@ -71,15 +75,15 @@ export const validateOrder = [
     .isFloat({ min: 0 }).withMessage('Total amount must be a positive number'),
   body('items')
     .optional()
-    .isArray().withMessage('Items must be an array'),
+    .isArray({ min: 1 }).withMessage('Items must be a non-empty array'),
   body('items.*.item_id')
-    .if(body('items').exists())
+    .optional()
     .isInt({ min: 1 }).withMessage('Invalid item ID'),
   body('items.*.quantity')
-    .if(body('items').exists())
+    .optional()
     .isFloat({ min: 0.01 }).withMessage('Quantity must be greater than 0'),
   body('items.*.unit_price')
-    .if(body('items').exists())
+    .optional()
     .isFloat({ min: 0 }).withMessage('Unit price must be a positive number'),
   handleValidationErrors
 ];
