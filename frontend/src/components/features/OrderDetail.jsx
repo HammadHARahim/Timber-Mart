@@ -4,19 +4,50 @@
 // ============================================================================
 
 import { useState } from 'react';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material';
+import {
+  Close as CloseIcon,
+  Edit as EditIcon,
+  Payment as PaymentIcon,
+  ArrowBack as BackIcon,
+} from '@mui/icons-material';
 import StatusBadge from '../shared/StatusBadge.jsx';
 import OrderItemsTable from './OrderItemsTable.jsx';
-import '../../styles/OrderDetail.css';
 
 export default function OrderDetail({
   order,
   onEdit,
   onStatusChange,
   onClose,
-  canEdit
+  canEdit,
+  onAddPayment
 }) {
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(order?.status || 'PENDING');
+  const [paymentData, setPaymentData] = useState({
+    amount: order?.balance_amount || 0,
+    payment_method: 'CASH',
+    notes: ''
+  });
 
   if (!order) {
     return <div className="empty-state">Order not found</div>;
@@ -29,26 +60,66 @@ export default function OrderDetail({
     setShowStatusModal(false);
   };
 
+  const handleAddPayment = () => {
+    if (onAddPayment) {
+      onAddPayment({
+        order_id: order.id,
+        customer_id: order.customer_id,
+        project_id: order.project_id,
+        ...paymentData,
+        payment_type: 'PAYMENT'
+      });
+      setShowPaymentModal(false);
+    }
+  };
+
+  const handlePaymentChange = (field, value) => {
+    setPaymentData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
-    <div className="order-detail-wrapper">
-      <div className="order-detail">
+    <Box sx={{ py: 3 }}>
+      <Paper elevation={0} sx={{ p: 3 }}>
         {/* Header */}
-        <div className="detail-header">
-          <div className="header-left">
-            <h2>Order Details</h2>
-            <p className="order-id">{order.order_id}</p>
-          </div>
-          <div className="header-right">
-            <button className="btn-secondary" onClick={onClose}>
-              Close
-            </button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Order Details
+            </Typography>
+            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+              {order.order_id}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<BackIcon />}
+              onClick={onClose}
+            >
+              Back
+            </Button>
             {canEdit && (
-              <button className="btn-primary" onClick={() => onEdit(order)}>
-                Edit Order
-              </button>
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={() => onEdit(order)}
+              >
+                Edit
+              </Button>
             )}
-          </div>
-        </div>
+            {parseFloat(order.balance_amount) > 0 && (
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<PaymentIcon />}
+                onClick={() => setShowPaymentModal(true)}
+              >
+                Add Payment
+              </Button>
+            )}
+          </Box>
+        </Box>
+        <Divider sx={{ mb: 3 }} />
 
         {/* Status and Payment Information */}
         <div className="detail-section">
@@ -187,43 +258,126 @@ export default function OrderDetail({
       </div>
 
       {/* Status Change Modal */}
-      {showStatusModal && (
-        <div className="modal-overlay" onClick={() => setShowStatusModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Change Order Status</h3>
-              <button className="modal-close" onClick={() => setShowStatusModal(false)}>
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>Current Status: <StatusBadge status={order.status} type="order" /></p>
-              <div className="form-group">
-                <label>New Status:</label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="status-select"
-                >
-                  <option value="PENDING">Pending</option>
-                  <option value="CONFIRMED">Confirmed</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CANCELLED">Cancelled</option>
-                </select>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="btn-primary" onClick={handleStatusUpdate}>
-                Update Status
-              </button>
-              <button className="btn-secondary" onClick={() => setShowStatusModal(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <Dialog
+        open={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            Change Order Status
+            <IconButton onClick={() => setShowStatusModal(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Current Status:
+              </Typography>
+              <StatusBadge status={order.status} type="order" />
+            </Box>
+            <Select
+              fullWidth
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              label="New Status"
+            >
+              <MenuItem value="PENDING">Pending</MenuItem>
+              <MenuItem value="CONFIRMED">Confirmed</MenuItem>
+              <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+              <MenuItem value="COMPLETED">Completed</MenuItem>
+              <MenuItem value="CANCELLED">Cancelled</MenuItem>
+            </Select>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowStatusModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleStatusUpdate}
+            disabled={selectedStatus === order.status}
+          >
+            Update Status
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Payment Modal */}
+      <Dialog
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            Add Payment
+            <IconButton onClick={() => setShowPaymentModal(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Order Balance:
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="error.main">
+                ₨{parseFloat(order.balance_amount || 0).toFixed(2)}
+              </Typography>
+            </Box>
+            <TextField
+              fullWidth
+              label="Payment Amount"
+              type="number"
+              value={paymentData.amount}
+              onChange={(e) => handlePaymentChange('amount', parseFloat(e.target.value) || 0)}
+              inputProps={{ min: 0, step: 0.01 }}
+              required
+            />
+            <Select
+              fullWidth
+              value={paymentData.payment_method}
+              onChange={(e) => handlePaymentChange('payment_method', e.target.value)}
+              label="Payment Method"
+            >
+              <MenuItem value="CASH">Cash</MenuItem>
+              <MenuItem value="CHECK">Check</MenuItem>
+              <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
+              <MenuItem value="ONLINE">Online Payment</MenuItem>
+            </Select>
+            <TextField
+              fullWidth
+              label="Notes (Optional)"
+              multiline
+              rows={3}
+              value={paymentData.notes}
+              onChange={(e) => handlePaymentChange('notes', e.target.value)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPaymentModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleAddPayment}
+            disabled={!paymentData.amount || paymentData.amount <= 0}
+          >
+            Add Payment
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
+    </Box>
   );
 }

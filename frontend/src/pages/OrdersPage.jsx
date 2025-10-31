@@ -342,11 +342,31 @@ export default function OrdersPage() {
     }
   };
 
+  // Handle add payment
+  const handleAddPayment = async (paymentData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiService.post('/api/payments', paymentData);
+      // Refresh order details to show updated balance
+      if (view === 'detail' && selectedOrder?.id) {
+        const response = await orderService.getOrderById(selectedOrder.id);
+        setSelectedOrder(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to add payment:', err);
+      setError(err.response?.data?.message || 'Failed to add payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle cancel
   const handleCancel = () => {
     setShowForm(false);
     setSelectedOrder(null);
     setError(null);
+    setView('list'); // Return to list view
   };
 
   // Configure Material React Table
@@ -546,6 +566,7 @@ export default function OrdersPage() {
           onStatusChange={handleStatusChange}
           onClose={handleCancel}
           canEdit={hasPermission('order:edit')}
+          onAddPayment={handleAddPayment}
         />
       )}
     </Container>
