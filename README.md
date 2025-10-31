@@ -67,8 +67,7 @@ A comprehensive CRM system with offline capabilities, featuring customer managem
 ## 📚 Documentation
 
 - **[CLAUDE.md](./CLAUDE.md)** - Complete development guide, architecture, and commands
-- **[docs/](./docs/)** - Historical documentation and migration notes
-- **[SECURITY_AND_VALIDATION_IMPROVEMENTS.md](./SECURITY_AND_VALIDATION_IMPROVEMENTS.md)** - Latest security enhancements
+- **[README.md](./README.md)** - This file - Quick start and overview
 
 ## 🏗️ Architecture
 
@@ -183,7 +182,6 @@ timber-mart-crm/
 │   │   ├── services/    # API & DB services
 │   │   └── theme/       # MUI theme
 │   └── public/
-├── docs/                # Documentation
 ├── CLAUDE.md            # Development guide
 └── README.md            # This file
 ```
@@ -213,18 +211,20 @@ See [CLAUDE.md](./CLAUDE.md) for complete list and workarounds.
 
 For issues and questions:
 1. Check [CLAUDE.md](./CLAUDE.md) for common solutions
-2. Review [docs/](./docs/) for feature documentation
-3. Check existing issues in the repository
+2. Check existing issues in the repository
+3. Review the codebase documentation in source files
 
 ## 🎯 Roadmap
 
-- [ ] Implement JWT refresh tokens
-- [ ] Add database migration system
-- [ ] Complete MUI migration
-- [ ] Add E2E tests
+- [x] Implement JWT refresh tokens ✅
+- [x] Add rate limiting and input validation ✅
+- [x] Migrate to Material UI components ✅
+- [ ] Complete database migration system (currently using Sequelize sync)
+- [ ] Add E2E tests (unit tests implemented)
 - [ ] Implement advanced sync conflict resolution
 - [ ] Add email notifications
 - [ ] Mobile app version
+- [ ] Fix customer balance display (show Credit/Debit)
 
 ---
 
