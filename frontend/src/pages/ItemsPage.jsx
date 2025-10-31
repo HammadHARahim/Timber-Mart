@@ -277,18 +277,50 @@ export default function ItemsPage() {
         </Typography>
       </Box>
 
-      {showForm ? (
-        <ItemForm
-          item={editingItem}
-          onSubmit={handleFormSubmit}
-          onCancel={() => {
+      {/* Item Form Modal */}
+      {showForm && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1300,
+          }}
+          onClick={() => {
             setShowForm(false);
             setEditingItem(null);
           }}
-        />
-      ) : (
-        <MaterialReactTable table={table} />
+        >
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              maxWidth: 800,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ItemForm
+              item={editingItem}
+              onSubmit={handleFormSubmit}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingItem(null);
+              }}
+            />
+          </Box>
+        </Box>
       )}
+
+      <MaterialReactTable table={table} />
     </Container>
   );
 }
