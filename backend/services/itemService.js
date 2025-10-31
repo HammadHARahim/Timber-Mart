@@ -272,32 +272,63 @@ class ItemService {
 
   // Search items for autocomplete (quick search)
   async searchItems(searchTerm, limit = 10) {
-    // Search for items by name, name_urdu, SKU, or shortcut code
-    const items = await Item.findAll({
+    // Search for items by name, name_urdu, SKU OR find items that have matching shortcuts
+    // We need to use a raw query approach because Sequelize doesn't handle this case well
+
+    // First, find item IDs that match by name, sku, or name_urdu
+    const directMatches = await Item.findAll({
       where: {
         is_active: true,
         [Op.or]: [
           { name: { [Op.iLike]: `%${searchTerm}%` } },
           { name_urdu: { [Op.iLike]: `%${searchTerm}%` } },
-          { sku: { [Op.iLike]: `%${searchTerm}%` } },
-          // Include items that have matching shortcuts
-          {
-            '$shortcuts.shortcut_code$': { [Op.iLike]: `%${searchTerm}%` }
-          }
+          { sku: { [Op.iLike]: `%${searchTerm}%` } }
         ]
+      },
+      attributes: ['id'],
+      limit: parseInt(limit),
+      raw: true
+    });
+
+    // Find item IDs that have matching shortcuts
+    const shortcutMatches = await Shortcut.findAll({
+      where: {
+        shortcut_code: { [Op.iLike]: `%${searchTerm}%` },
+        is_active: true
+      },
+      attributes: ['item_id'],
+      limit: parseInt(limit),
+      raw: true
+    });
+
+    // Combine all matching item IDs
+    const itemIds = new Set([
+      ...directMatches.map(item => item.id),
+      ...shortcutMatches.map(sc => sc.item_id)
+    ]);
+
+    // If no matches, return empty array
+    if (itemIds.size === 0) {
+      return [];
+    }
+
+    // Fetch complete item data with shortcuts for all matching items
+    const items = await Item.findAll({
+      where: {
+        id: Array.from(itemIds),
+        is_active: true
       },
       include: [
         {
           model: Shortcut,
           as: 'shortcuts',
           attributes: ['id', 'shortcut_code', 'quantity', 'description', 'is_active'],
-          required: false // LEFT JOIN so items without shortcuts are still included
+          required: false
         }
       ],
       limit: parseInt(limit),
       order: [['name', 'ASC']],
-      attributes: ['id', 'item_id', 'name', 'name_urdu', 'unit', 'default_price', 'category'],
-      distinct: true // Avoid duplicates when item has multiple shortcuts
+      attributes: ['id', 'item_id', 'name', 'name_urdu', 'unit', 'default_price', 'category']
     });
 
     return items;
