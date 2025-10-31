@@ -272,18 +272,32 @@ class ItemService {
 
   // Search items for autocomplete (quick search)
   async searchItems(searchTerm, limit = 10) {
+    // Search for items by name, name_urdu, SKU, or shortcut code
     const items = await Item.findAll({
       where: {
         is_active: true,
         [Op.or]: [
           { name: { [Op.iLike]: `%${searchTerm}%` } },
           { name_urdu: { [Op.iLike]: `%${searchTerm}%` } },
-          { sku: { [Op.iLike]: `%${searchTerm}%` } }
+          { sku: { [Op.iLike]: `%${searchTerm}%` } },
+          // Include items that have matching shortcuts
+          {
+            '$shortcuts.shortcut_code$': { [Op.iLike]: `%${searchTerm}%` }
+          }
         ]
       },
+      include: [
+        {
+          model: Shortcut,
+          as: 'shortcuts',
+          attributes: ['id', 'shortcut_code', 'quantity', 'description', 'is_active'],
+          required: false // LEFT JOIN so items without shortcuts are still included
+        }
+      ],
       limit: parseInt(limit),
       order: [['name', 'ASC']],
-      attributes: ['id', 'item_id', 'name', 'name_urdu', 'unit', 'default_price', 'category']
+      attributes: ['id', 'item_id', 'name', 'name_urdu', 'unit', 'default_price', 'category'],
+      distinct: true // Avoid duplicates when item has multiple shortcuts
     });
 
     return items;

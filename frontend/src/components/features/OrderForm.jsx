@@ -198,7 +198,7 @@ export default function OrderForm({
   const totals = calculateTotals();
 
   return (
-    <Paper elevation={0} sx={{ maxWidth: 600, width: '100%' }}>
+    <Paper elevation={0} sx={{ maxWidth: 900, width: '100%' }}>
       {/* Header */}
       <Box sx={{ p: 3, pb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>

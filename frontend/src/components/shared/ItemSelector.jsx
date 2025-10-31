@@ -51,8 +51,13 @@ export default function ItemSelector({ onSelect, placeholder = "Search items..."
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (item) => {
-    onSelect(item);
+  const handleSelect = (item, shortcut = null) => {
+    // If a shortcut was selected, include its quantity
+    const itemData = shortcut
+      ? { ...item, selectedShortcut: shortcut }
+      : item;
+
+    onSelect(itemData);
     setSearchTerm('');
     setItems([]);
     setShowDropdown(false);
@@ -73,24 +78,61 @@ export default function ItemSelector({ onSelect, placeholder = "Search items..."
 
       {showDropdown && items.length > 0 && (
         <ul className="item-dropdown">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              onClick={() => handleSelect(item)}
-              className="item-dropdown-option"
-            >
-              <div className="item-info">
-                <span className="item-name">{item.name}</span>
-                {item.name_urdu && (
-                  <span className="item-name-urdu">{item.name_urdu}</span>
-                )}
-              </div>
-              <div className="item-meta">
-                <span className="item-category">{item.category}</span>
-                <span className="item-price">₨{parseFloat(item.default_price).toFixed(2)}/{item.unit}</span>
-              </div>
-            </li>
-          ))}
+          {items.flatMap((item) => {
+            const options = [
+              /* Main item option */
+              <li
+                key={`item-${item.id}`}
+                onClick={() => handleSelect(item)}
+                className="item-dropdown-option"
+              >
+                <div className="item-info">
+                  <span className="item-name">{item.name}</span>
+                  {item.name_urdu && (
+                    <span className="item-name-urdu">{item.name_urdu}</span>
+                  )}
+                </div>
+                <div className="item-meta">
+                  <span className="item-category">{item.category}</span>
+                  <span className="item-price">₨{parseFloat(item.default_price).toFixed(2)}/{item.unit}</span>
+                </div>
+              </li>
+            ];
+
+            /* Add shortcut options for this item */
+            if (item.shortcuts && item.shortcuts.length > 0) {
+              item.shortcuts.forEach((shortcut) => {
+                options.push(
+                  <li
+                    key={`shortcut-${shortcut.id}`}
+                    onClick={() => handleSelect(item, shortcut)}
+                    className="item-dropdown-option shortcut-option"
+                    style={{ paddingLeft: '20px', backgroundColor: '#f8f9fa' }}
+                  >
+                    <div className="item-info">
+                      <span className="item-name">
+                        <strong style={{ color: '#6366f1' }}>{shortcut.shortcut_code}</strong>
+                        {' → '}{item.name}
+                      </span>
+                      {shortcut.description && (
+                        <span className="item-name-urdu" style={{ fontSize: '0.85em' }}>
+                          {shortcut.description}
+                        </span>
+                      )}
+                    </div>
+                    <div className="item-meta">
+                      <span className="item-category">Qty: {shortcut.quantity}</span>
+                      <span className="item-price">
+                        ₨{(parseFloat(item.default_price) * shortcut.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  </li>
+                );
+              });
+            }
+
+            return options;
+          })}
         </ul>
       )}
 

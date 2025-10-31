@@ -34,15 +34,20 @@ export default function OrderItemsTable({ items = [], onChange, readOnly = false
 
   // Add new item from selector
   const handleAddItem = (selectedItem) => {
+    // Check if a shortcut was selected
+    const shortcut = selectedItem.selectedShortcut;
+    const quantity = shortcut ? shortcut.quantity : 1;
+    const notes = shortcut && shortcut.description ? `Shortcut: ${shortcut.shortcut_code}` : '';
+
     const newItem = {
       item_id: selectedItem.id,
       item_name: selectedItem.name,
       item_name_urdu: selectedItem.name_urdu,
       unit: selectedItem.unit,
       unit_price: selectedItem.default_price,
-      quantity: 1,
+      quantity: quantity,
       discount_percent: 0,
-      notes: ''
+      notes: notes
     };
 
     const calculatedItem = calculateItemTotals(newItem);

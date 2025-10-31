@@ -502,7 +502,7 @@ export default function OrdersPage() {
             sx={{
               bgcolor: 'background.paper',
               borderRadius: 2,
-              maxWidth: 600,
+              maxWidth: 1000,
               width: '100%',
               maxHeight: '90vh',
               overflow: 'auto',
