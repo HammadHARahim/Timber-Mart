@@ -6,6 +6,7 @@
 import express from 'express';
 import projectService from '../services/projectService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validateProject, validateId, validatePagination } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.use(authenticateToken);
  * GET /api/projects
  * Get all projects with filters
  */
-router.get('/', async (req, res) => {
+router.get('/', validatePagination, async (req, res) => {
   try {
     const result = await projectService.getAllProjects(req.query);
     res.json({
@@ -73,7 +74,7 @@ router.get('/revenue-report', async (req, res) => {
  * GET /api/projects/:id
  * Get project by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateId, async (req, res) => {
   try {
     const project = await projectService.getProjectById(req.params.id);
     res.json({
@@ -92,7 +93,7 @@ router.get('/:id', async (req, res) => {
  * GET /api/projects/:id/statistics
  * Get project statistics
  */
-router.get('/:id/statistics', async (req, res) => {
+router.get('/:id/statistics', validateId, async (req, res) => {
   try {
     const stats = await projectService.getProjectStatistics(req.params.id);
     res.json({
@@ -111,7 +112,7 @@ router.get('/:id/statistics', async (req, res) => {
  * POST /api/projects
  * Create new project
  */
-router.post('/', async (req, res) => {
+router.post('/', validateProject, async (req, res) => {
   try {
     const project = await projectService.createProject(req.body, req.user.id);
     res.status(201).json({
@@ -131,7 +132,7 @@ router.post('/', async (req, res) => {
  * PUT /api/projects/:id
  * Update project
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateId, validateProject, async (req, res) => {
   try {
     const project = await projectService.updateProject(req.params.id, req.body);
     res.json({
@@ -151,7 +152,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /api/projects/:id
  * Delete project
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateId, async (req, res) => {
   try {
     const result = await projectService.deleteProject(req.params.id);
     res.json(result);

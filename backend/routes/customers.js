@@ -10,6 +10,7 @@ import { Op } from 'sequelize';
 import { authenticateToken, authorize } from '../middleware/auth.js';
 import  Customer  from '../models/Customer.js';
 import { UserActivityLog } from '../models/UserActivityLog.js';
+import { validateCustomer, validateId, validatePagination } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ const router = express.Router();
  *   - sortBy: "name" | "balance" | "created_at" (default)
  *   - sortOrder: "ASC" | "DESC" (default)
  */
-router.get('/', authenticateToken, async (req, res, next) => {
+router.get('/', authenticateToken, validatePagination, async (req, res, next) => {
   try {
     const { page = 1, limit = 10, search, customer_type, sortBy = 'created_at', sortOrder = 'DESC' } = req.query;
     const offset = (page - 1) * limit;
@@ -96,7 +97,7 @@ router.get('/', authenticateToken, async (req, res, next) => {
 /**
  * GET /api/customers/:id
  */
-router.get('/:id', authenticateToken, async (req, res, next) => {
+router.get('/:id', authenticateToken, validateId, async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -140,7 +141,7 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
  *   "customer_type": "regular"
  * }
  */
-router.post('/', authenticateToken, authorize(['customer.create']), async (req, res, next) => {
+router.post('/', authenticateToken, authorize(['customer.create']), validateCustomer, async (req, res, next) => {
   try {
     const { name, phone, email, address, customer_type } = req.body;
 
@@ -203,7 +204,7 @@ router.post('/', authenticateToken, authorize(['customer.create']), async (req, 
  *   "customer_type": "premium"
  * }
  */
-router.put('/:id', authenticateToken, authorize(['customer.edit']), async (req, res, next) => {
+router.put('/:id', authenticateToken, authorize(['customer.edit']), validateId, validateCustomer, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, phone, email, address, customer_type, balance } = req.body;
@@ -266,7 +267,7 @@ router.put('/:id', authenticateToken, authorize(['customer.edit']), async (req, 
 /**
  * DELETE /api/customers/:id
  */
-router.delete('/:id', authenticateToken, authorize(['customer.delete']), async (req, res, next) => {
+router.delete('/:id', authenticateToken, authorize(['customer.delete']), validateId, async (req, res, next) => {
   try {
     const { id } = req.params;
 

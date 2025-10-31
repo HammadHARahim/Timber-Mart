@@ -1,10 +1,28 @@
-import { useState, useEffect } from 'react';
-import styles from '../../styles/UserForm.module.css';
+// ============================================================================
+// User Form - Material UI Version
+// Based on requirements: Section 12.3 - User Creation Flow
+// ============================================================================
 
-/**
- * USER FORM COMPONENT
- * Based on requirements: Section 12.3 - User Creation Flow
- */
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  TextField,
+  MenuItem,
+  Button,
+  Typography,
+  Paper,
+  Alert,
+  FormControlLabel,
+  Checkbox,
+  CircularProgress,
+  Divider,
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  PersonAdd as PersonAddIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin', description: 'Full system access' },
@@ -109,136 +127,176 @@ export default function UserForm({ user, onClose, onSuccess }) {
   };
 
   return (
-    <div className={styles.userForm}>
-      <div className={styles.formHeader}>
-        <h2>{user ? 'Edit User' : 'Create New User'}</h2>
-        <p>{user ? 'Update user information and permissions' : 'Add a new user to the system'}</p>
-      </div>
+    <Paper elevation={0} sx={{ maxWidth: 600, width: '100%' }}>
+      {/* Form Header */}
+      <Box sx={{ p: 3, pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          {user ? (
+            <EditIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          ) : (
+            <PersonAddIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          )}
+          <Typography variant="h5" fontWeight={700}>
+            {user ? 'Edit User' : 'Create New User'}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {user ? 'Update user information and permissions' : 'Add a new user to the system'}
+        </Typography>
+      </Box>
 
+      <Divider />
+
+      {/* Error Alert */}
       {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
+        <Box sx={{ px: 3, pt: 2 }}>
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        </Box>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className={styles.formGroup}>
-          <label>
-            Username <span className={styles.required}>*</span>
-          </label>
-          <input
-            type="text"
+      {/* Form */}
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Username */}
+          <TextField
+            fullWidth
+            required
+            label="Username"
             name="username"
             value={formData.username}
             onChange={handleChange}
-            disabled={!!user}
+            disabled={!!user || loading}
             placeholder="Enter username"
-            required
+            helperText={user ? 'Username cannot be changed' : 'Unique identifier for login'}
           />
-        </div>
 
-        <div className={styles.formGroup}>
-          <label>Full Name</label>
-          <input
-            type="text"
+          {/* Full Name */}
+          <TextField
+            fullWidth
+            label="Full Name"
             name="full_name"
             value={formData.full_name}
             onChange={handleChange}
+            disabled={loading}
             placeholder="Enter full name"
           />
-        </div>
 
-        <div className={styles.formGroup}>
-          <label>Email</label>
-          <input
-            type="email"
+          {/* Email */}
+          <TextField
+            fullWidth
+            label="Email"
             name="email"
+            type="email"
             value={formData.email}
             onChange={handleChange}
+            disabled={loading}
             placeholder="user@example.com"
           />
-        </div>
 
-        <div className={styles.formGroup}>
-          <label>
-            Password {!user && <span className={styles.required}>*</span>}
-          </label>
-          <input
-            type="password"
+          {/* Password */}
+          <TextField
+            fullWidth
+            required={!user}
+            label="Password"
             name="password"
+            type="password"
             value={formData.password}
             onChange={handleChange}
+            disabled={loading}
             placeholder={user ? 'Leave blank to keep current password' : 'Enter password'}
-            required={!user}
-            minLength={6}
+            helperText={user ? 'Leave blank to keep current password' : 'Minimum 6 characters'}
+            inputProps={{ minLength: 6 }}
           />
-          <p className={styles.helperText}>
-            {user ? 'Leave blank to keep current password' : 'Minimum 6 characters'}
-          </p>
-        </div>
 
-        <div className={styles.formGroup}>
-          <label>
-            Role <span className={styles.required}>*</span>
-          </label>
-          <select
+          {/* Role */}
+          <TextField
+            fullWidth
+            required
+            select
+            label="Role"
             name="role"
             value={formData.role}
             onChange={handleChange}
-            required
+            disabled={loading}
+            helperText="Select the user's role and access level"
           >
-            {ROLES.map(role => (
-              <option key={role.value} value={role.value}>
-                {role.label} - {role.description}
-              </option>
+            {ROLES.map((role) => (
+              <MenuItem key={role.value} value={role.value}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    {role.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {role.description}
+                  </Typography>
+                </Box>
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </TextField>
 
-        <div className={styles.formGroup}>
-          <label>Department</label>
-          <input
-            type="text"
+          {/* Department */}
+          <TextField
+            fullWidth
+            label="Department"
             name="department"
             value={formData.department}
             onChange={handleChange}
+            disabled={loading}
             placeholder="e.g., Sales, Warehouse, Accounts"
           />
-        </div>
 
-        {user && (
-          <div className={styles.checkboxGroup}>
-            <input
-              type="checkbox"
-              id="is_active"
-              name="is_active"
-              checked={formData.is_active}
-              onChange={handleChange}
-            />
-            <label htmlFor="is_active">
-              User is active
-            </label>
-          </div>
-        )}
+          {/* Active Status Checkbox (only for editing) */}
+          {user && (
+            <Box sx={{ mt: 1 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.is_active}
+                    onChange={handleChange}
+                    name="is_active"
+                    disabled={loading}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      User is active
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Inactive users cannot log in to the system
+                    </Typography>
+                  </Box>
+                }
+              />
+            </Box>
+          )}
+        </Box>
 
-        <div className={styles.formActions}>
-          <button
-            type="button"
+        {/* Form Actions */}
+        <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
             onClick={onClose}
-            className={styles.btnCancel}
             disabled={loading}
+            startIcon={<CancelIcon />}
+            size="large"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={`btn-submit ${loading ? 'loading' : ''}`}
+            variant="contained"
             disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+            size="large"
           >
             {loading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
-          </button>
-        </div>
-      </form>
-    </div>
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
   );
 }

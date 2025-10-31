@@ -1,23 +1,27 @@
 // ============================================================================
-// FILE: src/components/features/OrderForm.jsx
-// Complete Order Create/Edit Form Component
+// Order Form - Material UI Version
 // ============================================================================
 
 import { useState, useEffect } from 'react';
+import {
+  Box,
+  TextField,
+  MenuItem,
+  Button,
+  Typography,
+  Paper,
+  Alert,
+  Divider,
+  CircularProgress,
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
 import OrderItemsTable from './OrderItemsTable.jsx';
-import '../../styles/OrderForm.css';
 
-/**
- * OrderForm Component
- *
- * Props:
- *   - order: Order object (if editing) or null (if creating)
- *   - customers: Array of customer options
- *   - projects: Array of project options (filtered by customer)
- *   - onSubmit: Function called with form data when submitted
- *   - onCancel: Function called when user cancels
- *   - loading: Boolean indicating if request is in progress
- */
 export default function OrderForm({
   order,
   customers = [],
@@ -51,7 +55,6 @@ export default function OrderForm({
         items: order.items || []
       });
     } else {
-      // Reset form for new order
       setFormData({
         customer_id: '',
         project_id: '',
@@ -72,7 +75,6 @@ export default function OrderForm({
       );
       setFilteredProjects(customerProjects);
 
-      // Reset project_id if it doesn't belong to selected customer
       if (formData.project_id) {
         const projectExists = customerProjects.some(
           p => p.id === parseInt(formData.project_id)
@@ -87,16 +89,12 @@ export default function OrderForm({
     }
   }, [formData.customer_id, projects]);
 
-  /**
-   * Handle input changes
-   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -105,15 +103,11 @@ export default function OrderForm({
     }
   };
 
-  /**
-   * Handle order items change
-   */
   const handleItemsChange = (updatedItems) => {
     setFormData(prev => ({
       ...prev,
       items: updatedItems
     }));
-    // Clear items error if any
     if (errors.items) {
       setErrors(prev => ({
         ...prev,
@@ -122,23 +116,17 @@ export default function OrderForm({
     }
   };
 
-  /**
-   * Validate form data
-   */
   const validateForm = () => {
     const newErrors = {};
 
-    // Customer is required
     if (!formData.customer_id) {
       newErrors.customer_id = 'Customer is required';
     }
 
-    // At least one item is required
     if (!formData.items || formData.items.length === 0) {
       newErrors.items = 'Order must have at least one item';
     }
 
-    // Validate delivery date if provided
     if (formData.delivery_date) {
       const deliveryDate = new Date(formData.delivery_date);
       const today = new Date();
@@ -153,45 +141,38 @@ export default function OrderForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Handle form submission
-   */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
+    try {
+      const orderData = {
+        customer_id: parseInt(formData.customer_id),
+        project_id: formData.project_id ? parseInt(formData.project_id) : null,
+        delivery_date: formData.delivery_date || null,
+        delivery_address: formData.delivery_address.trim() || '',
+        notes: formData.notes.trim() || '',
+        items: formData.items.map(item => ({
+          item_id: item.item_id,
+          quantity: parseFloat(item.quantity),
+          unit_price: parseFloat(item.unit_price),
+          discount_percent: parseFloat(item.discount_percent) || 0,
+          notes: item.notes || ''
+        }))
+      };
 
-    // Prepare order data
-    const orderData = {
-      customer_id: parseInt(formData.customer_id),
-      project_id: formData.project_id ? parseInt(formData.project_id) : null,
-      delivery_date: formData.delivery_date || null,
-      delivery_address: formData.delivery_address.trim() || '',
-      notes: formData.notes.trim() || '',
-      items: formData.items.map(item => ({
-        item_id: item.item_id,
-        quantity: parseFloat(item.quantity),
-        unit_price: parseFloat(item.unit_price),
-        discount_percent: parseFloat(item.discount_percent) || 0,
-        notes: item.notes || ''
-      }))
-    };
-
-    // Call parent submit handler
-    onSubmit(orderData);
-
-    // Reset submitting state after submission
-    setIsSubmitting(false);
+      await onSubmit(orderData);
+    } catch (err) {
+      setErrors({ submit: err.message || 'Failed to save order' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  /**
-   * Handle cancel
-   */
   const handleCancel = () => {
     setFormData({
       customer_id: '',
@@ -217,174 +198,212 @@ export default function OrderForm({
   const totals = calculateTotals();
 
   return (
-    <div className="order-form-wrapper">
-      <div className="order-form">
-        <div className="form-header">
-          <h2>{order ? 'Edit Order' : 'Create New Order'}</h2>
-          <p className="form-subtitle">
-            {order
-              ? `Editing order: ${order.order_id}`
-              : 'Create a new order with items'}
-          </p>
-        </div>
+    <Paper elevation={0} sx={{ maxWidth: 600, width: '100%' }}>
+      {/* Header */}
+      <Box sx={{ p: 3, pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          {order ? (
+            <EditIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          ) : (
+            <AddIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          )}
+          <Typography variant="h5" fontWeight={700}>
+            {order ? 'Edit Order' : 'Create New Order'}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {order
+            ? `Editing order: ${order.order_id}`
+            : 'Create a new order with items and details'}
+        </Typography>
+      </Box>
 
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Customer and Project Selection */}
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="customer_id">
-                Customer <span className="required">*</span>
-              </label>
-              <select
-                id="customer_id"
-                name="customer_id"
-                value={formData.customer_id}
-                onChange={handleChange}
-                className={errors.customer_id ? 'input-error' : ''}
-                disabled={loading || isSubmitting}
-                required
-              >
-                <option value="">Select Customer</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} ({customer.customer_id})
-                  </option>
-                ))}
-              </select>
-              {errors.customer_id && <span className="error-message">{errors.customer_id}</span>}
-            </div>
+      <Divider />
 
-            <div className="form-group">
-              <label htmlFor="project_id">Project (Optional)</label>
-              <select
-                id="project_id"
-                name="project_id"
-                value={formData.project_id}
-                onChange={handleChange}
-                disabled={loading || isSubmitting || !formData.customer_id}
-              >
-                <option value="">No Project</option>
-                {filteredProjects.map(project => (
-                  <option key={project.id} value={project.id}>
-                    {project.name} ({project.project_id})
-                  </option>
-                ))}
-              </select>
-              {!formData.customer_id && (
-                <p className="help-text">Select a customer first to see their projects</p>
-              )}
-            </div>
-          </div>
+      {/* Error Alert */}
+      {errors.submit && (
+        <Box sx={{ px: 3, pt: 2 }}>
+          <Alert severity="error" onClose={() => setErrors(prev => ({ ...prev, submit: '' }))}>
+            {errors.submit}
+          </Alert>
+        </Box>
+      )}
 
-          {/* Delivery Information */}
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="delivery_date">Delivery Date</label>
-              <input
-                id="delivery_date"
-                type="date"
-                name="delivery_date"
-                value={formData.delivery_date}
-                onChange={handleChange}
-                className={errors.delivery_date ? 'input-error' : ''}
-                disabled={loading || isSubmitting}
-              />
-              {errors.delivery_date && <span className="error-message">{errors.delivery_date}</span>}
-            </div>
+      {/* Form */}
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Customer */}
+          <TextField
+            fullWidth
+            required
+            select
+            label="Customer"
+            name="customer_id"
+            value={formData.customer_id}
+            onChange={handleChange}
+            disabled={loading || isSubmitting}
+            error={!!errors.customer_id}
+            helperText={errors.customer_id || 'Select the customer for this order'}
+          >
+            <MenuItem value="">
+              <em>Select Customer</em>
+            </MenuItem>
+            {customers.map(customer => (
+              <MenuItem key={customer.id} value={customer.id}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    {customer.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ID: {customer.customer_id}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </TextField>
 
-            <div className="form-group">
-              <label htmlFor="delivery_address">Delivery Address</label>
-              <input
-                id="delivery_address"
-                type="text"
-                name="delivery_address"
-                value={formData.delivery_address}
-                onChange={handleChange}
-                placeholder="Enter delivery address"
-                disabled={loading || isSubmitting}
-              />
-            </div>
-          </div>
+          {/* Project */}
+          <TextField
+            fullWidth
+            select
+            label="Project (Optional)"
+            name="project_id"
+            value={formData.project_id}
+            onChange={handleChange}
+            disabled={loading || isSubmitting || !formData.customer_id}
+            helperText={
+              !formData.customer_id
+                ? 'Select a customer first to see their projects'
+                : 'Link this order to a specific project (optional)'
+            }
+          >
+            <MenuItem value="">
+              <em>No Project</em>
+            </MenuItem>
+            {filteredProjects.map(project => (
+              <MenuItem key={project.id} value={project.id}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    {project.name || project.project_name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ID: {project.project_id}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </TextField>
 
-          {/* Notes Field */}
-          <div className="form-group">
-            <label htmlFor="notes">Order Notes</label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Additional notes or instructions for this order"
-              rows="3"
-              disabled={loading || isSubmitting}
-            />
-          </div>
+          {/* Delivery Date */}
+          <TextField
+            fullWidth
+            label="Delivery Date"
+            name="delivery_date"
+            type="date"
+            value={formData.delivery_date}
+            onChange={handleChange}
+            disabled={loading || isSubmitting}
+            InputLabelProps={{ shrink: true }}
+            error={!!errors.delivery_date}
+            helperText={errors.delivery_date || 'Expected delivery date (optional)'}
+          />
 
-          {/* Order Items Table */}
-          <div className="form-section">
-            <h3>Order Items <span className="required">*</span></h3>
+          {/* Delivery Address */}
+          <TextField
+            fullWidth
+            label="Delivery Address"
+            name="delivery_address"
+            value={formData.delivery_address}
+            onChange={handleChange}
+            disabled={loading || isSubmitting}
+            helperText="Delivery location for this order"
+          />
+
+          {/* Notes */}
+          <TextField
+            fullWidth
+            label="Order Notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            multiline
+            rows={3}
+            disabled={loading || isSubmitting}
+            helperText="Additional notes or instructions for this order"
+          />
+
+          {/* Order Items Section */}
+          <Box>
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              Order Items <span style={{ color: 'error.main' }}>*</span>
+            </Typography>
             <OrderItemsTable
               items={formData.items}
               onChange={handleItemsChange}
               readOnly={false}
             />
-            {errors.items && <span className="error-message">{errors.items}</span>}
-          </div>
+            {errors.items && (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                {errors.items}
+              </Typography>
+            )}
+          </Box>
 
           {/* Order Summary */}
           {formData.items.length > 0 && (
-            <div className="order-summary">
-              <h3>Order Summary</h3>
-              <div className="summary-row">
-                <span>Total Amount:</span>
-                <span className="amount">₨{totals.totalAmount.toFixed(2)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Total Discount:</span>
-                <span className="amount discount">-₨{totals.discountAmount.toFixed(2)}</span>
-              </div>
-              <div className="summary-row total">
-                <span>Final Amount:</span>
-                <span className="amount">₨{totals.finalAmount.toFixed(2)}</span>
-              </div>
-            </div>
+            <Paper sx={{ p: 2.5, bgcolor: 'background.default', border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Order Summary
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2">Total Amount:</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    ₨{totals.totalAmount.toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2">Total Discount:</Typography>
+                  <Typography variant="body2" fontWeight={600} color="error.main">
+                    -₨{totals.discountAmount.toFixed(2)}
+                  </Typography>
+                </Box>
+                <Divider sx={{ my: 0.5 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" fontWeight={700}>Final Amount:</Typography>
+                  <Typography variant="body1" fontWeight={700} color="primary.main">
+                    ₨{totals.finalAmount.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
           )}
+        </Box>
 
-          {/* Form Actions */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading || isSubmitting}
-            >
-              {isSubmitting || loading ? (
-                <>
-                  <span className="spinner"></span>
-                  {order ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                order ? 'Update Order' : 'Create Order'
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleCancel}
-              disabled={loading || isSubmitting}
-            >
-              Cancel
-            </button>
-          </div>
-
-          {/* Form Info */}
-          <div className="form-info">
-            <p>
-              <strong>Note:</strong> Fields marked with <span className="required">*</span> are required
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Form Actions */}
+        <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            onClick={handleCancel}
+            disabled={loading || isSubmitting}
+            startIcon={<CancelIcon />}
+            size="large"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading || isSubmitting}
+            startIcon={isSubmitting || loading ? <CircularProgress size={20} /> : <SaveIcon />}
+            size="large"
+          >
+            {isSubmitting || loading
+              ? 'Saving...'
+              : (order ? 'Update Order' : 'Create Order')}
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
   );
 }

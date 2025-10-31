@@ -2,12 +2,13 @@ import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { checkPermission } from '../middleware/authorize.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { validateItem, validateId, validatePagination } from '../middleware/validation.js';
 import itemService from '../services/itemService.js';
 
 const router = express.Router();
 
 // GET /api/items - Get all items with filtering
-router.get('/', authenticateToken, checkPermission('order:view'), asyncHandler(async (req, res) => {
+router.get('/', authenticateToken, checkPermission('order:view'), validatePagination, asyncHandler(async (req, res) => {
   const { search, category, is_active, page, limit } = req.query;
 
   const filters = {
@@ -56,7 +57,7 @@ router.get('/categories', authenticateToken, asyncHandler(async (req, res) => {
 }));
 
 // GET /api/items/:id - Get item by ID
-router.get('/:id', authenticateToken, checkPermission('order:view'), asyncHandler(async (req, res) => {
+router.get('/:id', authenticateToken, checkPermission('order:view'), validateId, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const item = await itemService.getItemById(id);
@@ -68,7 +69,7 @@ router.get('/:id', authenticateToken, checkPermission('order:view'), asyncHandle
 }));
 
 // POST /api/items - Create new item
-router.post('/', authenticateToken, checkPermission('order:create'), asyncHandler(async (req, res) => {
+router.post('/', authenticateToken, checkPermission('order:create'), validateItem, asyncHandler(async (req, res) => {
   const itemData = req.body;
   const userId = req.user.id;
 
@@ -103,7 +104,7 @@ router.post('/bulk', authenticateToken, checkPermission('order:create'), asyncHa
 }));
 
 // PUT /api/items/:id - Update item
-router.put('/:id', authenticateToken, checkPermission('order:edit'), asyncHandler(async (req, res) => {
+router.put('/:id', authenticateToken, checkPermission('order:edit'), validateId, validateItem, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const itemData = req.body;
 
@@ -141,7 +142,7 @@ router.patch('/:id/activate', authenticateToken, checkPermission('order:edit'), 
 }));
 
 // DELETE /api/items/:id - Delete item permanently
-router.delete('/:id', authenticateToken, checkPermission('order:delete'), asyncHandler(async (req, res) => {
+router.delete('/:id', authenticateToken, checkPermission('order:delete'), validateId, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const result = await itemService.deleteItem(id);

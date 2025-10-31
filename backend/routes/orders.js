@@ -2,12 +2,13 @@ import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { checkPermission } from '../middleware/authorize.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { validateOrder, validateId, validatePagination } from '../middleware/validation.js';
 import orderService from '../services/orderService.js';
 
 const router = express.Router();
 
 // GET /api/orders - Get all orders with filtering
-router.get('/', authenticateToken, checkPermission('order:view'), asyncHandler(async (req, res) => {
+router.get('/', authenticateToken, checkPermission('order:view'), validatePagination, asyncHandler(async (req, res) => {
   const { search, customer_id, project_id, status, payment_status, date_from, date_to, page, limit } = req.query;
 
   const filters = {
@@ -50,7 +51,7 @@ router.get('/statistics', authenticateToken, checkPermission('order:view'), asyn
 }));
 
 // GET /api/orders/:id - Get order by ID
-router.get('/:id', authenticateToken, checkPermission('order:view'), asyncHandler(async (req, res) => {
+router.get('/:id', authenticateToken, checkPermission('order:view'), validateId, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const order = await orderService.getOrderById(id);
@@ -62,7 +63,7 @@ router.get('/:id', authenticateToken, checkPermission('order:view'), asyncHandle
 }));
 
 // POST /api/orders - Create new order
-router.post('/', authenticateToken, checkPermission('order:create'), asyncHandler(async (req, res) => {
+router.post('/', authenticateToken, checkPermission('order:create'), validateOrder, asyncHandler(async (req, res) => {
   const orderData = req.body;
   const userId = req.user.id;
 
@@ -76,7 +77,7 @@ router.post('/', authenticateToken, checkPermission('order:create'), asyncHandle
 }));
 
 // PUT /api/orders/:id - Update order
-router.put('/:id', authenticateToken, checkPermission('order:edit'), asyncHandler(async (req, res) => {
+router.put('/:id', authenticateToken, checkPermission('order:edit'), validateId, validateOrder, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const orderData = req.body;
   const userId = req.user.id;
@@ -91,7 +92,7 @@ router.put('/:id', authenticateToken, checkPermission('order:edit'), asyncHandle
 }));
 
 // PATCH /api/orders/:id/status - Update order status
-router.patch('/:id/status', authenticateToken, checkPermission('order:edit'), asyncHandler(async (req, res) => {
+router.patch('/:id/status', authenticateToken, checkPermission('order:edit'), validateId, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   const userId = req.user.id;
@@ -113,7 +114,7 @@ router.patch('/:id/status', authenticateToken, checkPermission('order:edit'), as
 }));
 
 // DELETE /api/orders/:id - Delete order
-router.delete('/:id', authenticateToken, checkPermission('order:delete'), asyncHandler(async (req, res) => {
+router.delete('/:id', authenticateToken, checkPermission('order:delete'), validateId, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const result = await orderService.deleteOrder(id);

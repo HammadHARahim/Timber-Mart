@@ -6,6 +6,7 @@
 import express from 'express';
 import checkService from '../services/checkService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validateCheck, validateId, validatePagination } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.use(authenticateToken);
  * GET /api/checks
  * Get all checks with filters
  */
-router.get('/', async (req, res) => {
+router.get('/', validatePagination, async (req, res) => {
   try {
     const result = await checkService.getAllChecks(req.query);
     res.json({
@@ -92,7 +93,7 @@ router.get('/statistics', async (req, res) => {
  * GET /api/checks/:id
  * Get check by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateId, async (req, res) => {
   try {
     const check = await checkService.getCheckById(req.params.id);
     res.json({
@@ -111,7 +112,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/checks
  * Create new check
  */
-router.post('/', async (req, res) => {
+router.post('/', validateCheck, async (req, res) => {
   try {
     const check = await checkService.createCheck(req.body, req.user.id);
     res.status(201).json({
@@ -131,7 +132,7 @@ router.post('/', async (req, res) => {
  * PUT /api/checks/:id
  * Update check
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateId, validateCheck, async (req, res) => {
   try {
     const check = await checkService.updateCheck(req.params.id, req.body, req.user.id);
     res.json({
@@ -151,7 +152,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /api/checks/:id
  * Delete check
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateId, async (req, res) => {
   try {
     const result = await checkService.deleteCheck(req.params.id);
     res.json(result);
@@ -167,7 +168,7 @@ router.delete('/:id', async (req, res) => {
  * POST /api/checks/:id/clear
  * Mark check as cleared
  */
-router.post('/:id/clear', async (req, res) => {
+router.post('/:id/clear', validateId, async (req, res) => {
   try {
     const check = await checkService.markAsCleared(req.params.id, req.user.id);
     res.json({
@@ -187,7 +188,7 @@ router.post('/:id/clear', async (req, res) => {
  * POST /api/checks/:id/bounce
  * Mark check as bounced
  */
-router.post('/:id/bounce', async (req, res) => {
+router.post('/:id/bounce', validateId, async (req, res) => {
   try {
     const check = await checkService.markAsBounced(req.params.id, req.user.id);
     res.json({
@@ -207,7 +208,7 @@ router.post('/:id/bounce', async (req, res) => {
  * POST /api/checks/:id/cancel
  * Cancel check
  */
-router.post('/:id/cancel', async (req, res) => {
+router.post('/:id/cancel', validateId, async (req, res) => {
   try {
     const check = await checkService.cancelCheck(req.params.id);
     res.json({
@@ -227,7 +228,7 @@ router.post('/:id/cancel', async (req, res) => {
  * GET /api/checks/customer/:customerId
  * Get checks by customer
  */
-router.get('/customer/:customerId', async (req, res) => {
+router.get('/customer/:customerId', validateId, async (req, res) => {
   try {
     const checks = await checkService.getChecksByCustomer(req.params.customerId);
     res.json({
@@ -246,7 +247,7 @@ router.get('/customer/:customerId', async (req, res) => {
  * GET /api/checks/project/:projectId
  * Get checks by project
  */
-router.get('/project/:projectId', async (req, res) => {
+router.get('/project/:projectId', validateId, async (req, res) => {
   try {
     const checks = await checkService.getChecksByProject(req.params.projectId);
     res.json({
@@ -265,7 +266,7 @@ router.get('/project/:projectId', async (req, res) => {
  * GET /api/checks/payment/:paymentId
  * Get checks by payment
  */
-router.get('/payment/:paymentId', async (req, res) => {
+router.get('/payment/:paymentId', validateId, async (req, res) => {
   try {
     const checks = await checkService.getChecksByPayment(req.params.paymentId);
     res.json({

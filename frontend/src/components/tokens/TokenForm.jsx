@@ -1,16 +1,31 @@
 // ============================================================================
-// FILE: src/components/tokens/TokenForm.jsx
-// Token creation/editing form
+// Token Form - Material UI Version
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  TextField,
+  MenuItem,
+  Button,
+  Typography,
+  Paper,
+  Alert,
+  Divider,
+  CircularProgress,
+} from '@mui/material';
+import {
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
 import tokenService from '../../services/tokenService';
 import orderService from '../../services/orderService';
 import customerService from '../../services/customerService';
 import projectService from '../../services/projectService';
-import './TokenForm.css';
 
-const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
+export default function TokenForm({ token, orderId = null, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     order_id: orderId || '',
     customer_id: '',
@@ -26,8 +41,8 @@ const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
@@ -92,21 +107,26 @@ const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
       setProjects(response.data.projects || []);
     } catch (err) {
       console.error('Failed to load projects:', err);
-      // Projects endpoint doesn't exist yet (Phase 8), set empty array
       setProjects([]);
     } finally {
       setLoadingProjects(false);
     }
   };
 
-  const handleChange = (field, value) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
 
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+
     // Auto-fill customer name when customer is selected
-    if (field === 'customer_id' && value && customers) {
+    if (name === 'customer_id' && value && customers) {
       const customer = customers.find(c => c.id === parseInt(value));
       if (customer) {
         setFormData(prev => ({
@@ -117,7 +137,7 @@ const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
     }
 
     // Auto-fill project name when project is selected
-    if (field === 'project_id' && value && projects) {
+    if (name === 'project_id' && value && projects) {
       const project = projects.find(p => p.id === parseInt(value));
       if (project) {
         setFormData(prev => ({
@@ -128,19 +148,27 @@ const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Either Order or Customer Name is required
+    if (!formData.customer_name && !formData.order_id) {
+      newErrors.customer_name = 'Either Order or Customer Name is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.customer_name && !formData.order_id) {
-      setError('Either Order or Customer Name is required');
+    if (!validateForm()) {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      setLoading(true);
-      setError(null);
-
       if (formData.order_id) {
         // Generate from order
         await tokenService.generateFromOrder(formData.order_id, {
@@ -162,174 +190,232 @@ const TokenForm = ({ token, orderId = null, onSave, onCancel }) => {
         onSave();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save token');
+      setErrors({ submit: err.response?.data?.message || 'Failed to save token' });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="token-form-container">
-      <form onSubmit={handleSubmit} className="token-form">
-        <h2>{token ? 'Edit Token' : 'Create Token'}</h2>
+    <Paper elevation={0} sx={{ maxWidth: 600, width: '100%' }}>
+      {/* Header */}
+      <Box sx={{ p: 3, pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+          {token ? (
+            <EditIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          ) : (
+            <AddIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+          )}
+          <Typography variant="h5" fontWeight={700}>
+            {token ? 'Edit Token' : 'Create New Token'}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {token
+            ? 'Update token information and delivery details'
+            : 'Create a new delivery token with QR code'}
+        </Typography>
+      </Box>
 
-        {error && <div className="error-message">{error}</div>}
+      <Divider />
 
-        {/* Source Selection */}
-        <div className="form-section">
-          <h3>Token Source</h3>
+      {/* Error Alert */}
+      {errors.submit && (
+        <Box sx={{ px: 3, pt: 2 }}>
+          <Alert severity="error" onClose={() => setErrors(prev => ({ ...prev, submit: '' }))}>
+            {errors.submit}
+          </Alert>
+        </Box>
+      )}
 
+      {/* Form */}
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+          {/* Link to Order (Optional) */}
           {!orderId && !token && (
-            <div className="form-group">
-              <label htmlFor="order_id">Link to Order (Optional)</label>
-              <select
-                id="order_id"
-                value={formData.order_id}
-                onChange={(e) => handleChange('order_id', e.target.value)}
-                disabled={loadingOrders}
-              >
-                <option value="">No Order (Standalone Token)</option>
-                {orders && orders.map(order => (
-                  <option key={order.id} value={order.id}>
-                    {order.order_number} - {order.customer_name} ({order.total_amount})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <TextField
+              fullWidth
+              select
+              label="Link to Order (Optional)"
+              name="order_id"
+              value={formData.order_id}
+              onChange={handleChange}
+              disabled={loadingOrders}
+              helperText="Select an existing order to link (optional)"
+            >
+              <MenuItem value="">
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>No Order (Standalone Token)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Create a token without linking to an order
+                  </Typography>
+                </Box>
+              </MenuItem>
+              {orders && orders.map(order => (
+                <MenuItem key={order.id} value={order.id}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {order.order_number} - {order.customer_name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ₨{order.total_amount}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </TextField>
           )}
 
+          {/* Customer Selection & Name (only if no order selected) */}
           {!formData.order_id && (
             <>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="customer_id">Customer</label>
-                  <select
-                    id="customer_id"
-                    value={formData.customer_id}
-                    onChange={(e) => handleChange('customer_id', e.target.value)}
-                    disabled={loadingCustomers}
-                  >
-                    <option value="">Select Customer</option>
-                    {customers && customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name} - {customer.phone}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <TextField
+                fullWidth
+                select
+                label="Customer"
+                name="customer_id"
+                value={formData.customer_id}
+                onChange={handleChange}
+                disabled={loadingCustomers}
+                helperText="Select a customer to auto-fill name"
+              >
+                <MenuItem value="">
+                  <em>Select Customer</em>
+                </MenuItem>
+                {customers && customers.map(customer => (
+                  <MenuItem key={customer.id} value={customer.id}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{customer.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {customer.phone}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </TextField>
 
-                <div className="form-group">
-                  <label htmlFor="customer_name">Customer Name *</label>
-                  <input
-                    id="customer_name"
-                    type="text"
-                    value={formData.customer_name}
-                    onChange={(e) => handleChange('customer_name', e.target.value)}
-                    placeholder="Enter customer name"
-                    required={!formData.order_id}
-                  />
-                </div>
-              </div>
+              <TextField
+                fullWidth
+                required={!formData.order_id}
+                label="Customer Name"
+                name="customer_name"
+                value={formData.customer_name}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                error={!!errors.customer_name}
+                helperText={errors.customer_name || "Full name of the customer"}
+              />
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="project_id">Project</label>
-                  <select
-                    id="project_id"
-                    value={formData.project_id}
-                    onChange={(e) => handleChange('project_id', e.target.value)}
-                    disabled={loadingProjects}
-                  >
-                    <option value="">Select Project</option>
-                    {projects && projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name} - {project.location}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <TextField
+                fullWidth
+                select
+                label="Project"
+                name="project_id"
+                value={formData.project_id}
+                onChange={handleChange}
+                disabled={loadingProjects}
+                helperText="Select a project to auto-fill name (optional)"
+              >
+                <MenuItem value="">
+                  <em>Select Project</em>
+                </MenuItem>
+                {projects && projects.map(project => (
+                  <MenuItem key={project.id} value={project.id}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{project.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {project.location}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </TextField>
 
-                <div className="form-group">
-                  <label htmlFor="project_name">Project Name</label>
-                  <input
-                    id="project_name"
-                    type="text"
-                    value={formData.project_name}
-                    onChange={(e) => handleChange('project_name', e.target.value)}
-                    placeholder="Enter project name"
-                  />
-                </div>
-              </div>
+              <TextField
+                fullWidth
+                label="Project Name"
+                name="project_name"
+                value={formData.project_name}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                helperText="Name of the project (optional)"
+              />
             </>
           )}
-        </div>
 
-        {/* Vehicle & Driver Info */}
-        <div className="form-section">
-          <h3>Vehicle & Driver Information</h3>
+          {/* Vehicle Number */}
+          <TextField
+            fullWidth
+            label="Vehicle Number"
+            name="vehicle_number"
+            value={formData.vehicle_number}
+            onChange={(e) => handleChange({ target: { name: 'vehicle_number', value: e.target.value.toUpperCase() } })}
+            disabled={isSubmitting}
+            helperText="Vehicle registration number (e.g., ABC-1234)"
+          />
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="vehicle_number">Vehicle Number</label>
-              <input
-                id="vehicle_number"
-                type="text"
-                value={formData.vehicle_number}
-                onChange={(e) => handleChange('vehicle_number', e.target.value.toUpperCase())}
-                placeholder="e.g., ABC-1234"
-              />
-            </div>
+          {/* Driver Name */}
+          <TextField
+            fullWidth
+            label="Driver Name"
+            name="driver_name"
+            value={formData.driver_name}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            helperText="Full name of the driver"
+          />
 
-            <div className="form-group">
-              <label htmlFor="driver_name">Driver Name</label>
-              <input
-                id="driver_name"
-                type="text"
-                value={formData.driver_name}
-                onChange={(e) => handleChange('driver_name', e.target.value)}
-                placeholder="Driver's name"
-              />
-            </div>
+          {/* Driver Phone */}
+          <TextField
+            fullWidth
+            label="Driver Phone"
+            name="driver_phone"
+            type="tel"
+            value={formData.driver_phone}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            helperText="Driver's contact phone number"
+          />
 
-            <div className="form-group">
-              <label htmlFor="driver_phone">Driver Phone</label>
-              <input
-                id="driver_phone"
-                type="tel"
-                value={formData.driver_phone}
-                onChange={(e) => handleChange('driver_phone', e.target.value)}
-                placeholder="Driver's phone number"
-              />
-            </div>
-          </div>
-        </div>
+          {/* Notes */}
+          <TextField
+            fullWidth
+            label="Notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            multiline
+            rows={3}
+            disabled={isSubmitting}
+            helperText="Additional notes or special delivery instructions"
+          />
+        </Box>
 
-        {/* Notes */}
-        <div className="form-section">
-          <div className="form-group">
-            <label htmlFor="notes">Notes</label>
-            <textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleChange('notes', e.target.value)}
-              placeholder="Additional notes or instructions"
-              rows="3"
-            />
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="form-actions">
-          <button type="button" onClick={onCancel} className="btn btn-secondary">
+        {/* Form Actions */}
+        <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            startIcon={<CancelIcon />}
+            size="large"
+          >
             Cancel
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : token ? 'Update Token' : 'Create Token'}
-          </button>
-        </div>
-      </form>
-    </div>
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
+            size="large"
+          >
+            {isSubmitting
+              ? 'Saving...'
+              : (token ? 'Update Token' : 'Create Token')}
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
   );
-};
-
-export default TokenForm;
+}

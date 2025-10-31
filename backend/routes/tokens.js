@@ -7,6 +7,7 @@ import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { checkPermission } from '../middleware/authorize.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { validateToken, validateId, validatePagination } from '../middleware/validation.js';
 import tokenService from '../services/tokenService.js';
 
 const router = express.Router();
@@ -15,7 +16,7 @@ const router = express.Router();
  * GET /api/tokens
  * Get all tokens with filtering
  */
-router.get('/', authenticateToken, checkPermission('token:view'), asyncHandler(async (req, res) => {
+router.get('/', authenticateToken, checkPermission('token:view'), validatePagination, asyncHandler(async (req, res) => {
   const result = await tokenService.getAllTokens(req.query);
   res.json({ success: true, data: result });
 }));
@@ -24,7 +25,7 @@ router.get('/', authenticateToken, checkPermission('token:view'), asyncHandler(a
  * GET /api/tokens/:id
  * Get token by ID
  */
-router.get('/:id', authenticateToken, checkPermission('token:view'), asyncHandler(async (req, res) => {
+router.get('/:id', validateId, authenticateToken, checkPermission('token:view'), asyncHandler(async (req, res) => {
   const token = await tokenService.getTokenById(req.params.id);
   res.json({ success: true, data: token });
 }));
@@ -42,7 +43,7 @@ router.get('/order/:orderId', authenticateToken, checkPermission('token:view'), 
  * POST /api/tokens
  * Create new token
  */
-router.post('/', authenticateToken, checkPermission('token:create'), asyncHandler(async (req, res) => {
+router.post('/', authenticateToken, checkPermission('token:create'), validateToken, asyncHandler(async (req, res) => {
   const token = await tokenService.createToken(req.body, req.user.id);
   res.status(201).json({ success: true, data: token, message: 'Token created successfully' });
 }));
@@ -60,7 +61,7 @@ router.post('/from-order/:orderId', authenticateToken, checkPermission('token:cr
  * PUT /api/tokens/:id
  * Update token
  */
-router.put('/:id', authenticateToken, checkPermission('token:edit'), asyncHandler(async (req, res) => {
+router.put('/:id', validateId, authenticateToken, checkPermission('token:edit'), asyncHandler(async (req, res) => {
   const token = await tokenService.updateToken(req.params.id, req.body, req.user.id);
   res.json({ success: true, data: token, message: 'Token updated successfully' });
 }));
@@ -88,7 +89,7 @@ router.patch('/:id/print', authenticateToken, checkPermission('token:print'), as
  * DELETE /api/tokens/:id
  * Delete token
  */
-router.delete('/:id', authenticateToken, checkPermission('token:delete'), asyncHandler(async (req, res) => {
+router.delete('/:id', validateId, authenticateToken, checkPermission('token:delete'), asyncHandler(async (req, res) => {
   const result = await tokenService.deleteToken(req.params.id);
   res.json({ success: true, ...result });
 }));

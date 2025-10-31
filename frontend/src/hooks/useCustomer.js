@@ -12,8 +12,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { api, ApiError } from '../utils/apiClient';
 
 export function useCustomer() {
   const [loading, setLoading] = useState(false);
@@ -26,7 +25,6 @@ export function useCustomer() {
   const fetchCustomers = useCallback(async (page = 1, search = '', customerType = '', sortBy = 'created_at', sortOrder = 'DESC') => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('auth_token');
 
       const queryParams = new URLSearchParams({
         page,
@@ -37,26 +35,14 @@ export function useCustomer() {
         sortOrder
       });
 
-      const response = await fetch(`${API_URL}/api/customers?${queryParams}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch customers');
-      }
-
-      const data = await response.json();
+      const data = await api.get(`/api/customers?${queryParams}`);
       setCustomers(data.data);
       setPagination(data.pagination);
     } catch (error) {
       addNotification({
         type: 'error',
         message: error.message,
-        persistent: true
+        persistent: error instanceof ApiError && error.status !== 0
       });
     } finally {
       setLoading(false);
@@ -67,27 +53,13 @@ export function useCustomer() {
   const fetchCustomer = useCallback(async (id) => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('auth_token');
-
-      const response = await fetch(`${API_URL}/api/customers/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch customer');
-      }
-
-      const data = await response.json();
+      const data = await api.get(`/api/customers/${id}`);
       return data.data;
     } catch (error) {
       addNotification({
         type: 'error',
         message: error.message,
-        persistent: true
+        persistent: error instanceof ApiError && error.status !== 0
       });
       return null;
     } finally {
@@ -99,23 +71,7 @@ export function useCustomer() {
   const createCustomer = useCallback(async (customerData) => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('auth_token');
-
-      const response = await fetch(`${API_URL}/api/customers`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(customerData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create customer');
-      }
-
-      const data = await response.json();
+      const data = await api.post('/api/customers', customerData);
       addNotification({
         type: 'success',
         message: 'Customer created successfully'
@@ -125,7 +81,7 @@ export function useCustomer() {
       addNotification({
         type: 'error',
         message: error.message,
-        persistent: true
+        persistent: error instanceof ApiError && error.status !== 0
       });
       return null;
     } finally {
@@ -137,23 +93,7 @@ export function useCustomer() {
   const updateCustomer = useCallback(async (id, customerData) => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('auth_token');
-
-      const response = await fetch(`${API_URL}/api/customers/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(customerData)
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update customer');
-      }
-
-      const data = await response.json();
+      const data = await api.put(`/api/customers/${id}`, customerData);
       addNotification({
         type: 'success',
         message: 'Customer updated successfully'
@@ -163,7 +103,7 @@ export function useCustomer() {
       addNotification({
         type: 'error',
         message: error.message,
-        persistent: true
+        persistent: error instanceof ApiError && error.status !== 0
       });
       return null;
     } finally {
@@ -175,21 +115,7 @@ export function useCustomer() {
   const deleteCustomer = useCallback(async (id) => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('auth_token');
-
-      const response = await fetch(`${API_URL}/api/customers/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete customer');
-      }
-
+      await api.delete(`/api/customers/${id}`);
       addNotification({
         type: 'success',
         message: 'Customer deleted successfully'
@@ -199,7 +125,7 @@ export function useCustomer() {
       addNotification({
         type: 'error',
         message: error.message,
-        persistent: true
+        persistent: error instanceof ApiError && error.status !== 0
       });
       return false;
     } finally {
@@ -210,21 +136,7 @@ export function useCustomer() {
   // Search customers
   const searchCustomers = useCallback(async (query) => {
     try {
-      const token = sessionStorage.getItem('auth_token');
-
-      const response = await fetch(`${API_URL}/api/customers/search/${query}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      const data = await response.json();
+      const data = await api.get(`/api/customers/search/${query}`);
       return data.data;
     } catch (error) {
       return [];

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { api, ApiError } from '../utils/apiClient';
 
 export const AuthContext = createContext(null);
 
@@ -27,18 +28,10 @@ export function AuthProvider({ children }) {
   const login = async (username, password) => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
-      sessionStorage.setItem('auth_token', data.token);
+      const data = await api.post('/api/auth/login', { username, password }, { requiresAuth: false });
+      // Backend returns accessToken, not token
+      const token = data.accessToken || data.token;
+      sessionStorage.setItem('auth_token', token);
       sessionStorage.setItem('auth_user', JSON.stringify(data.user));
       setUser(data.user);
       return { success: true };

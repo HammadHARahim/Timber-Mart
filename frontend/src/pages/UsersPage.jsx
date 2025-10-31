@@ -1,14 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import UserList from '../components/features/UserList';
-import UserForm from '../components/features/UserForm';
-import styles from '../styles/UsersPage.module.css';
+// ============================================================================
+// Users Page - Material React Table Version
+// ============================================================================
 
-/**
- * USERS PAGE
- * Based on requirements: Phase 10 - User Management & Admin Panel
- * Section 12.3 - User Management Features
- */
+import { useMemo, useState, useEffect } from 'react';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from 'material-react-table';
+import {
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  Tooltip,
+  Typography,
+  Container,
+  Paper,
+  Alert,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Refresh as RefreshIcon,
+} from '@mui/icons-material';
+import { useAuth } from '../hooks/useAuth';
+import UserForm from '../components/features/UserForm';
 
 export default function UsersPage() {
   const { user: currentUser, hasPermission } = useAuth();
@@ -17,26 +33,27 @@ export default function UsersPage() {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 20,
+  });
 
-  // Check if user has permission to manage users (Admin only)
-  if (!hasPermission('user.create') && currentUser?.role !== 'ADMIN') {
-    return (
-      <div className={styles.usersPage}>
-        <div className={styles.accessDenied}>
-          <h2>Access Denied</h2>
-          <p>You don't have permission to manage users.</p>
-        </div>
-      </div>
-    );
-  }
+  // Check permissions
+  const canManageUsers = hasPermission('user.create') || currentUser?.role === 'ADMIN';
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (canManageUsers) {
+      fetchUsers();
+    }
+  }, [canManageUsers]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
       const token = sessionStorage.getItem('auth_token');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/users`, {
         headers: {
@@ -49,13 +66,102 @@ export default function UsersPage() {
       }
 
       const data = await response.json();
-      setUsers(data.users);
+      setUsers(data.users || []);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Define columns
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'ID',
+        size: 80,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" fontFamily="monospace">
+            {cell.getValue()}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'username',
+        header: 'Username',
+        size: 150,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" fontWeight={600}>
+            {cell.getValue()}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        size: 200,
+        Cell: ({ cell }) => (
+          <Typography variant="body2">
+            {cell.getValue()}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        size: 150,
+        filterVariant: 'select',
+        filterSelectOptions: ['ADMIN', 'MANAGER', 'SALES_OFFICER', 'WAREHOUSE_STAFF', 'ACCOUNTANT'],
+        Cell: ({ cell }) => {
+          const role = cell.getValue();
+          const colorMap = {
+            ADMIN: 'error',
+            MANAGER: 'warning',
+            SALES_OFFICER: 'info',
+            WAREHOUSE_STAFF: 'success',
+            ACCOUNTANT: 'primary',
+          };
+          const labelMap = {
+            ADMIN: 'Admin',
+            MANAGER: 'Manager',
+            SALES_OFFICER: 'Sales Officer',
+            WAREHOUSE_STAFF: 'Warehouse Staff',
+            ACCOUNTANT: 'Accountant',
+          };
+          return (
+            <Chip
+              label={labelMap[role] || role}
+              color={colorMap[role] || 'default'}
+              size="small"
+              sx={{ fontWeight: 600 }}
+            />
+          );
+        },
+      },
+      {
+        accessorKey: 'is_active',
+        header: 'Status',
+        size: 100,
+        filterVariant: 'checkbox',
+        Cell: ({ cell }) => (
+          <Chip
+            label={cell.getValue() ? 'Active' : 'Inactive'}
+            color={cell.getValue() ? 'success' : 'default'}
+            size="small"
+            sx={{ fontWeight: 600 }}
+          />
+        ),
+      },
+      {
+        accessorKey: 'created_at',
+        header: 'Created',
+        size: 120,
+        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleDateString(),
+      },
+    ],
+    []
+  );
 
   const handleCreateUser = () => {
     setEditingUser(null);
@@ -78,74 +184,192 @@ export default function UsersPage() {
     fetchUsers();
   };
 
-  if (loading) {
+  // Configure Material React Table
+  const table = useMaterialReactTable({
+    columns,
+    data: users,
+    enableColumnFilterModes: true,
+    enableColumnOrdering: true,
+    enableGrouping: true,
+    enableColumnPinning: true,
+    enableFacetedValues: true,
+    enableRowActions: true,
+    enableRowSelection: false,
+    initialState: {
+      showColumnFilters: false,
+      showGlobalFilter: true,
+      columnPinning: {
+        right: ['mrt-row-actions'],
+      },
+      density: 'compact',
+    },
+    muiToolbarAlertBannerProps: loading
+      ? { color: 'info', children: 'Loading users...' }
+      : error
+      ? { color: 'error', children: error }
+      : undefined,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="Edit User">
+          <IconButton
+            size="small"
+            onClick={() => handleEditUser(row.original)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleCreateUser}
+        >
+          Add New User
+        </Button>
+        <Tooltip title="Refresh">
+          <IconButton onClick={() => fetchUsers()}>
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    state: {
+      columnFilters,
+      globalFilter,
+      isLoading: false,
+      pagination,
+      showAlertBanner: false,
+      showProgressBars: false,
+      sorting,
+    },
+    muiPaginationProps: {
+      rowsPerPageOptions: [10, 20, 50],
+      showFirstButton: true,
+      showLastButton: true,
+    },
+  });
+
+  // Access denied check
+  if (!canManageUsers) {
     return (
-      <div className={styles.usersPage}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Loading users...</p>
-        </div>
-      </div>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Box textAlign="center" py={5}>
+          <Typography variant="h4" gutterBottom color="error">
+            Access Denied
+          </Typography>
+          <Typography variant="body1">
+            You don't have permission to manage users.
+          </Typography>
+        </Box>
+      </Container>
     );
   }
 
-  if (error) {
+  // Error state
+  if (error && !loading) {
     return (
-      <div className={styles.usersPage}>
-        <div className={styles.errorContainer}>
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={fetchUsers}>
-            Retry
-          </button>
-        </div>
-      </div>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={fetchUsers}>
+          Retry
+        </Button>
+      </Container>
     );
   }
 
   return (
-    <div className={styles.usersPage}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1>User Management</h1>
-          <p>Manage system users, roles, and permissions</p>
-        </div>
-        <button
-          onClick={handleCreateUser}
-          className={styles.btnAddUser}
-        >
-          + Add New User
-        </button>
-      </div>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Box mb={3}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          User Management
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Manage system users, roles, and permissions
+        </Typography>
+      </Box>
 
+      {/* User Form Modal */}
       {showForm && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1300,
+          }}
+          onClick={handleFormClose}
+        >
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              p: 3,
+              maxWidth: 600,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <UserForm
               user={editingUser}
               onClose={handleFormClose}
               onSuccess={handleFormSuccess}
             />
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
-      <UserList
-        users={users}
-        onEdit={handleEditUser}
-        onRefresh={fetchUsers}
-      />
+      <MaterialReactTable table={table} />
 
-      <div className={styles.infoBox}>
-        <h3>User Roles & Permissions</h3>
-        <ul>
-          <li><strong>ADMIN:</strong> Full system access, user management</li>
-          <li><strong>MANAGER:</strong> Team management, approvals, reports</li>
-          <li><strong>SALES_OFFICER:</strong> Customer and order management</li>
-          <li><strong>WAREHOUSE_STAFF:</strong> Inventory and fulfillment</li>
-          <li><strong>ACCOUNTANT:</strong> Financial operations and reports</li>
-        </ul>
-      </div>
-    </div>
+      {/* Role Information */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" gutterBottom fontWeight={600}>
+          User Roles & Permissions
+        </Typography>
+        <Box component="ul" sx={{ pl: 2 }}>
+          <li>
+            <Typography variant="body2">
+              <strong>ADMIN:</strong> Full system access, user management
+            </Typography>
+          </li>
+          <li>
+            <Typography variant="body2">
+              <strong>MANAGER:</strong> Team management, approvals, reports
+            </Typography>
+          </li>
+          <li>
+            <Typography variant="body2">
+              <strong>SALES_OFFICER:</strong> Customer and order management
+            </Typography>
+          </li>
+          <li>
+            <Typography variant="body2">
+              <strong>WAREHOUSE_STAFF:</strong> Inventory and fulfillment
+            </Typography>
+          </li>
+          <li>
+            <Typography variant="body2">
+              <strong>ACCOUNTANT:</strong> Financial operations and reports
+            </Typography>
+          </li>
+        </Box>
+      </Paper>
+    </Container>
   );
 }

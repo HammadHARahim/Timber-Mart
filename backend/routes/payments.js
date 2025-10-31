@@ -6,6 +6,7 @@
 import express from 'express';
 import paymentService from '../services/paymentService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validatePayment, validateId, validatePagination } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.use(authenticateToken);
  * GET /api/payments
  * Get all payments with filters
  */
-router.get('/', async (req, res) => {
+router.get('/', validatePagination, async (req, res) => {
   try {
     const result = await paymentService.getAllPayments(req.query);
     res.json({
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
  * GET /api/payments/:id
  * Get payment by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateId, async (req, res) => {
   try {
     const payment = await paymentService.getPaymentById(req.params.id);
     res.json({
@@ -54,7 +55,7 @@ router.get('/:id', async (req, res) => {
  * POST /api/payments
  * Create new payment
  */
-router.post('/', async (req, res) => {
+router.post('/', validatePayment, async (req, res) => {
   try {
     const payment = await paymentService.createPayment(req.body, req.user.id);
     res.status(201).json({
@@ -74,7 +75,7 @@ router.post('/', async (req, res) => {
  * PUT /api/payments/:id
  * Update payment
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateId, validatePayment, async (req, res) => {
   try {
     const payment = await paymentService.updatePayment(req.params.id, req.body, req.user.id);
     res.json({
@@ -94,7 +95,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /api/payments/:id
  * Delete payment
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateId, async (req, res) => {
   try {
     const result = await paymentService.deletePayment(req.params.id);
     res.json(result);
@@ -110,7 +111,7 @@ router.delete('/:id', async (req, res) => {
  * POST /api/payments/:id/approve
  * Approve payment
  */
-router.post('/:id/approve', async (req, res) => {
+router.post('/:id/approve', validateId, async (req, res) => {
   try {
     const payment = await paymentService.approvePayment(req.params.id, req.user.id);
     res.json({
@@ -130,7 +131,7 @@ router.post('/:id/approve', async (req, res) => {
  * POST /api/payments/:id/reject
  * Reject payment
  */
-router.post('/:id/reject', async (req, res) => {
+router.post('/:id/reject', validateId, async (req, res) => {
   try {
     const payment = await paymentService.rejectPayment(req.params.id, req.user.id);
     res.json({
@@ -150,7 +151,7 @@ router.post('/:id/reject', async (req, res) => {
  * POST /api/payments/:id/complete
  * Mark payment as completed
  */
-router.post('/:id/complete', async (req, res) => {
+router.post('/:id/complete', validateId, async (req, res) => {
   try {
     const payment = await paymentService.completePayment(req.params.id);
     res.json({
@@ -170,7 +171,7 @@ router.post('/:id/complete', async (req, res) => {
  * GET /api/payments/:id/voucher
  * Generate payment voucher
  */
-router.get('/:id/voucher', async (req, res) => {
+router.get('/:id/voucher', validateId, async (req, res) => {
   try {
     const voucherData = await paymentService.generateVoucher(req.params.id);
     res.json({
@@ -189,7 +190,7 @@ router.get('/:id/voucher', async (req, res) => {
  * GET /api/payments/customer/:customerId
  * Get payments by customer
  */
-router.get('/customer/:customerId', async (req, res) => {
+router.get('/customer/:customerId', validateId, async (req, res) => {
   try {
     const payments = await paymentService.getPaymentsByCustomer(req.params.customerId);
     res.json({
@@ -208,7 +209,7 @@ router.get('/customer/:customerId', async (req, res) => {
  * GET /api/payments/project/:projectId
  * Get payments by project
  */
-router.get('/project/:projectId', async (req, res) => {
+router.get('/project/:projectId', validateId, async (req, res) => {
   try {
     const payments = await paymentService.getPaymentsByProject(req.params.projectId);
     res.json({
@@ -227,7 +228,7 @@ router.get('/project/:projectId', async (req, res) => {
  * GET /api/payments/order/:orderId
  * Get payments by order
  */
-router.get('/order/:orderId', async (req, res) => {
+router.get('/order/:orderId', validateId, async (req, res) => {
   try {
     const payments = await paymentService.getPaymentsByOrder(req.params.orderId);
     res.json({

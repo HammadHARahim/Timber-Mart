@@ -191,6 +191,19 @@ class CheckService {
       cleared_by_user_id: userId
     });
 
+    // Update related payment status if exists
+    // When check is cleared, automatically approve and complete the payment
+    if (check.payment_id) {
+      const payment = await Payment.findByPk(check.payment_id);
+      if (payment && payment.status === 'PENDING') {
+        await payment.update({
+          status: 'APPROVED',
+          approved_at: new Date(),
+          approved_by_user_id: userId
+        });
+      }
+    }
+
     return check;
   }
 
@@ -208,6 +221,19 @@ class CheckService {
       status: 'BOUNCED',
       cleared_by_user_id: userId
     });
+
+    // Update related payment status if exists
+    if (check.payment_id) {
+      const payment = await Payment.findByPk(check.payment_id);
+      if (payment && (payment.status === 'APPROVED' || payment.status === 'COMPLETED')) {
+        // Revert payment back to pending if check bounced
+        await payment.update({
+          status: 'PENDING',
+          approved_at: null,
+          approved_by_user_id: null
+        });
+      }
+    }
 
     return check;
   }

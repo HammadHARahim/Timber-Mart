@@ -7,6 +7,7 @@
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -28,9 +29,13 @@ import printRoutes from './routes/print.js';
 import paymentRoutes from './routes/payments.js';
 import checkRoutes from './routes/checks.js';
 import projectRoutes from './routes/projects.js';
+import searchRoutes from './routes/search.js';
 import { errorHandler, asyncHandler } from './middleware/errorHandler.js';
 import { authenticateToken } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
+import { apiLimiter, authLimiter, syncLimiter } from './middleware/rateLimiter.js';
+import { validateLogin } from './middleware/validation.js';
+import { generateAccessToken, generateRefreshToken, verifyAccessToken, getRefreshTokenExpiry } from './utils/tokenUtils.js';
 import { seedRolesAndPermissions, getPermissionsForRole } from './utils/seedData.js';
 import User from './models/User.js';
 import { setupAssociations } from './models/associations.js';
@@ -46,9 +51,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+app.use(helmet()); // Security headers
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
+
+// Apply general rate limiting to all API routes
+app.use('/api/', apiLimiter);
 
 // ============================================================================
 // 6. ROUTES
@@ -61,15 +70,8 @@ app.use(requestLogger);
 
 // LOGIN ENDPOINT
 // POST /api/auth/login
-app.post('/api/auth/login', asyncHandler(async (req, res) => {
+app.post('/api/auth/login', authLimiter, validateLogin, asyncHandler(async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({
-      success: false,
-      error: 'Username and password are required'
-    });
-  }
 
   // Find user by username
   const user = await User.findOne({ where: { username } });
@@ -97,28 +99,26 @@ app.post('/api/auth/login', asyncHandler(async (req, res) => {
     });
   }
 
-  // Update last login
-  await user.update({ last_login: new Date() });
-
   // Get permissions for role
   const permissions = getPermissionsForRole(user.role);
 
-  // Generate JWT token with permissions
-  const token = jwt.sign(
-    {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      email: user.email,
-      permissions: permissions
-    },
-    config.JWT_SECRET,
-    { expiresIn: config.JWT_EXPIRES_IN }
-  );
+  // Generate access and refresh tokens
+  const accessToken = generateAccessToken({ ...user.dataValues, permissions });
+  const refreshToken = generateRefreshToken();
+  const refreshTokenExpiry = getRefreshTokenExpiry();
+
+  // Update user with refresh token and last login
+  await user.update({
+    last_login: new Date(),
+    refresh_token: refreshToken,
+    refresh_token_expires: refreshTokenExpiry
+  });
 
   res.json({
     success: true,
-    token,
+    accessToken,
+    refreshToken,
+    expiresIn: 900, // 15 minutes in seconds
     user: {
       id: user.id,
       username: user.username,
@@ -128,6 +128,62 @@ app.post('/api/auth/login', asyncHandler(async (req, res) => {
       department: user.department,
       permissions
     }
+  });
+}));
+
+// REFRESH TOKEN ENDPOINT
+// POST /api/auth/refresh
+app.post('/api/auth/refresh', asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({
+      success: false,
+      error: 'Refresh token is required'
+    });
+  }
+
+  // Find user with this refresh token
+  const user = await User.findOne({ where: { refresh_token: refreshToken } });
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid refresh token'
+    });
+  }
+
+  // Check if refresh token is expired
+  if (new Date() > user.refresh_token_expires) {
+    return res.status(401).json({
+      success: false,
+      error: 'Refresh token expired'
+    });
+  }
+
+  // Generate new access token
+  const permissions = getPermissionsForRole(user.role);
+  const accessToken = generateAccessToken({ ...user.dataValues, permissions });
+
+  res.json({
+    success: true,
+    accessToken,
+    expiresIn: 900 // 15 minutes
+  });
+}));
+
+// LOGOUT ENDPOINT
+// POST /api/auth/logout
+app.post('/api/auth/logout', authenticateToken, asyncHandler(async (req, res) => {
+  // Clear refresh token
+  await User.update(
+    { refresh_token: null, refresh_token_expires: null },
+    { where: { id: req.user.id } }
+  );
+
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
   });
 }));
 
@@ -284,7 +340,7 @@ app.get('/api/auth/me', authenticateToken, asyncHandler(async (req, res) => {
 
 // Mount route modules
 app.use('/api/customers', customerRoutes);
-app.use('/api/sync', syncRoutes);
+app.use('/api/sync', syncLimiter, syncRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/print-templates', printTemplateRoutes);
@@ -293,6 +349,7 @@ app.use('/api/print', printRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/checks', checkRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/search', searchRoutes);
 
 // HEALTH CHECK ENDPOINT
 app.get('/api/health', (req, res) => {
@@ -333,9 +390,10 @@ async function startServer() {
     // Seed default roles and permissions (if needed)
     await seedRolesAndPermissions();
 
-    // Start server
-    app.listen(PORT, () => {
+    // Start server - bind to 0.0.0.0 to allow network access
+    app.listen(PORT, '0.0.0.0', () => {
       logger.info(`Server running on http://localhost:${PORT}`);
+      logger.info(`Network: Server accessible on all network interfaces`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {

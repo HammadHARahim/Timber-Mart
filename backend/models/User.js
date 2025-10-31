@@ -48,6 +48,14 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  refresh_token: {
+    type: DataTypes.STRING(500),
+    allowNull: true
+  },
+  refresh_token_expires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,
