@@ -73,7 +73,8 @@ export default function OrdersPage() {
         limit: pagination.pageSize
       };
       const response = await orderService.getAllOrders(filters);
-      setOrders(response.data?.orders || []);
+      // API returns { success: true, data: { orders: [...], total, page, totalPages } }
+      setOrders(response.success && response.data?.orders ? response.data.orders : []);
     } catch (err) {
       console.error('Failed to fetch orders:', err);
       setError('Failed to load orders. Please try again.');
@@ -84,18 +85,23 @@ export default function OrdersPage() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await apiService.getCustomers({ limit: 1000 });
-      setCustomers(response.data || []);
+      const response = await apiService.getCustomers({ limit: 100 });
+      // API returns { success: true, data: [...], pagination: {...} }
+      setCustomers(response.success && response.data ? response.data : []);
     } catch (err) {
       console.error('Failed to fetch customers:', err);
+      setCustomers([]); // Set empty array on error
     }
   };
 
   const fetchProjects = async () => {
     try {
-      setProjects([]);
+      const response = await apiService.get('/api/projects?limit=100');
+      // API returns { success: true, data: { projects: [...], pagination: {...} } }
+      setProjects(response.success && response.data?.projects ? response.data.projects : []);
     } catch (err) {
       console.error('Failed to fetch projects:', err);
+      setProjects([]); // Set empty array on error
     }
   };
 
