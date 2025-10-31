@@ -16,6 +16,7 @@ import ChecksPage from './pages/ChecksPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ReportsPage from './pages/ReportsPage';
 import GlobalSearchPage from './pages/GlobalSearchPage';
+import ItemsPage from './pages/ItemsPage';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import MainLayout from './components/shared/MainLayout';
 import './App.css';
@@ -43,6 +44,7 @@ function App() {
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/items" element={<ItemsPage />} />
                 <Route path="/templates" element={<TemplatesPage />} />
                 <Route path="/tokens" element={<TokensPage />} />
                 <Route path="/print-settings" element={<PrintSettingsPage />} />

@@ -7,6 +7,7 @@ import Payment from './Payment.js';
 import Check from './Check.js';
 import Item from './Item.js';
 import OrderItem from './OrderItem.js';
+import Shortcut from './Shortcut.js';
 import PrintTemplate from './PrintTemplate.js';
 import Token from './Token.js';
 import PrintSettings from './PrintSettings.js';
@@ -44,6 +45,10 @@ const setupAssociations = () => {
   // Item associations
   Item.belongsTo(User, { foreignKey: 'created_by_user_id', as: 'creator' });
   Item.hasMany(OrderItem, { foreignKey: 'item_id', as: 'orderItems' });
+  Item.hasMany(Shortcut, { foreignKey: 'item_id', as: 'shortcuts', onDelete: 'CASCADE' });
+
+  // Shortcut associations
+  Shortcut.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });
 
   // Project associations
   Project.belongsTo(Customer, { foreignKey: 'customer_id', as: 'customer' });
@@ -111,6 +116,7 @@ export {
   Check,
   Item,
   OrderItem,
+  Shortcut,
   PrintTemplate,
   Token,
   PrintSettings
