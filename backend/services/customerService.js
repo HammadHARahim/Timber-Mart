@@ -54,7 +54,8 @@ class CustomerService {
         { name: { [Op.iLike]: `%${search}%` } },
         { phone: { [Op.iLike]: `%${search}%` } },
         { email: { [Op.iLike]: `%${search}%` } },
-        { customer_id: { [Op.iLike]: `%${search}%` } }
+        { customer_id: { [Op.iLike]: `%${search}%` } },
+        { address: { [Op.iLike]: `%${search}%` } }
       ];
     }
 

@@ -234,11 +234,13 @@ class OrderService {
       }
     }
 
-    // Search by order ID
+    // Search by order ID, notes, delivery address, and customer name
     if (search) {
       where[Op.or] = [
         { order_id: { [Op.iLike]: `%${search}%` } },
-        { notes: { [Op.iLike]: `%${search}%` } }
+        { notes: { [Op.iLike]: `%${search}%` } },
+        { delivery_address: { [Op.iLike]: `%${search}%` } },
+        { '$customer.name$': { [Op.iLike]: `%${search}%` } }
       ];
     }
 
@@ -250,7 +252,8 @@ class OrderService {
         {
           model: Customer,
           as: 'customer',
-          attributes: ['id', 'customer_id', 'name', 'phone']
+          attributes: ['id', 'customer_id', 'name', 'phone'],
+          required: false
         },
         {
           model: Project,
@@ -265,7 +268,9 @@ class OrderService {
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['order_date', 'DESC']]
+      order: [['order_date', 'DESC']],
+      subQuery: false,
+      distinct: true
     });
 
     return {
@@ -350,26 +355,32 @@ class OrderService {
         // Restore customer's previously applied credit (if any) back to their balance
         if (order.credit_applied && parseFloat(order.credit_applied) > 0) {
           const previousCredit = parseFloat(order.credit_applied);
+          const currentBalance = parseFloat(customer.balance);
+          const newBalance = Number((currentBalance - previousCredit).toFixed(2));
+
           await customer.update({
-            balance: parseFloat(customer.balance) - previousCredit // Return credit to customer
+            balance: newBalance // Return credit to customer
           }, { transaction });
           // Subtract previous credit from paid_amount since we're recalculating
-          paid_amount -= previousCredit;
+          paid_amount = Number((paid_amount - previousCredit).toFixed(2));
         }
 
         // Re-fetch customer to get updated balance
         await customer.reload({ transaction });
 
         // Only apply credit if apply_credit is true and there's available credit
-        if (apply_credit && parseFloat(customer.balance) < 0) {
-          const available_credit = Math.abs(parseFloat(customer.balance));
+        const currentBalance = parseFloat(customer.balance);
+        if (apply_credit && currentBalance < 0) {
+          const available_credit = Math.abs(currentBalance);
           const remaining_balance = final_amount - paid_amount;
           credit_applied = Math.min(available_credit, remaining_balance);
-          paid_amount += credit_applied;
+          credit_applied = Number(credit_applied.toFixed(2));
+          paid_amount = Number((paid_amount + credit_applied).toFixed(2));
 
           // Update customer balance (reduce their credit)
+          const updatedBalance = Number((currentBalance + credit_applied).toFixed(2));
           await customer.update({
-            balance: parseFloat(customer.balance) + credit_applied
+            balance: updatedBalance
           }, { transaction });
         }
 

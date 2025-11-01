@@ -75,7 +75,10 @@ class PaymentService {
       where[Op.or] = [
         { payment_id: { [Op.iLike]: `%${search}%` } },
         { reference_number: { [Op.iLike]: `%${search}%` } },
-        { check_number: { [Op.iLike]: `%${search}%` } }
+        { check_number: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { '$customer.name$': { [Op.iLike]: `%${search}%` } },
+        { '$project.project_name$': { [Op.iLike]: `%${search}%` } }
       ];
     }
 
@@ -84,15 +87,17 @@ class PaymentService {
     const { count, rows } = await Payment.findAndCountAll({
       where,
       include: [
-        { model: Customer, as: 'customer' },
+        { model: Customer, as: 'customer', required: false },
         { model: Order, as: 'order' },
-        { model: Project, as: 'project' },
+        { model: Project, as: 'project', required: false },
         { model: User, as: 'creator' },
         { model: User, as: 'approver' }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['payment_date', 'DESC']]
+      order: [['payment_date', 'DESC']],
+      subQuery: false,
+      distinct: true
     });
 
     return {

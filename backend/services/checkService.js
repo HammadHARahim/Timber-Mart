@@ -70,7 +70,9 @@ class CheckService {
         { check_id: { [Op.iLike]: `%${search}%` } },
         { check_number: { [Op.iLike]: `%${search}%` } },
         { payee_name: { [Op.iLike]: `%${search}%` } },
-        { bank_name: { [Op.iLike]: `%${search}%` } }
+        { bank_name: { [Op.iLike]: `%${search}%` } },
+        { '$customer.name$': { [Op.iLike]: `%${search}%` } },
+        { '$project.project_name$': { [Op.iLike]: `%${search}%` } }
       ];
     }
 
@@ -80,14 +82,16 @@ class CheckService {
       where,
       include: [
         { model: Payment, as: 'payment' },
-        { model: Customer, as: 'customer' },
-        { model: Project, as: 'project' },
+        { model: Customer, as: 'customer', required: false },
+        { model: Project, as: 'project', required: false },
         { model: User, as: 'creator' },
         { model: User, as: 'clearer' }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['check_date', 'DESC']]
+      order: [['check_date', 'DESC']],
+      subQuery: false,
+      distinct: true
     });
 
     return {

@@ -65,6 +65,7 @@ export default function GlobalSearchPage() {
     payments: true,
     checks: true,
     tokens: true,
+    items: true,
   });
   const [filters, setFilters] = useState({
     startDate: '',
@@ -221,6 +222,7 @@ export default function GlobalSearchPage() {
       payments: true,
       checks: true,
       tokens: true,
+      items: true,
     });
   };
 
@@ -266,12 +268,13 @@ export default function GlobalSearchPage() {
     if (!searchResults) return;
 
     const allResults = [
-      ...searchResults.customers.map(r => ({ ...r, type: 'Customer' })),
-      ...searchResults.orders.map(r => ({ ...r, type: 'Order' })),
-      ...searchResults.projects.map(r => ({ ...r, type: 'Project' })),
-      ...searchResults.payments.map(r => ({ ...r, type: 'Payment' })),
-      ...searchResults.checks.map(r => ({ ...r, type: 'Check' })),
-      ...searchResults.tokens.map(r => ({ ...r, type: 'Token' })),
+      ...(searchResults.customers || []).map(r => ({ ...r, type: 'Customer' })),
+      ...(searchResults.orders || []).map(r => ({ ...r, type: 'Order' })),
+      ...(searchResults.projects || []).map(r => ({ ...r, type: 'Project' })),
+      ...(searchResults.payments || []).map(r => ({ ...r, type: 'Payment' })),
+      ...(searchResults.checks || []).map(r => ({ ...r, type: 'Check' })),
+      ...(searchResults.tokens || []).map(r => ({ ...r, type: 'Token' })),
+      ...(searchResults.items || []).map(r => ({ ...r, type: 'Item' })),
     ];
 
     // Create CSV

@@ -26,6 +26,7 @@ import {
   AttachMoney as PaymentsIcon,
   Receipt as ChecksIcon,
   QrCode as TokensIcon,
+  Inventory as ItemsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -111,6 +112,19 @@ export default function SearchResults({ results }) {
         <Chip label={item.status} size="small" />
       ]
     },
+    items: {
+      icon: <ItemsIcon />,
+      label: 'Items',
+      color: '#f97316',
+      columns: ['Item ID', 'Name', 'Name (Urdu)', 'Category', 'Price'],
+      renderRow: (item) => [
+        item.item_id,
+        item.name || '-',
+        item.name_urdu || '-',
+        item.category || '-',
+        `₨${parseFloat(item.default_price || 0).toLocaleString()}`
+      ]
+    },
   };
 
   return (
@@ -177,6 +191,7 @@ export default function SearchResults({ results }) {
                               payments: '/payments',
                               checks: '/checks',
                               tokens: '/tokens',
+                              items: '/items',
                             };
                             navigate(routes[entityType]);
                           }}

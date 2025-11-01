@@ -94,13 +94,15 @@ class ItemService {
       where.is_active = is_active;
     }
 
-    // Search by name, name_urdu, or sku
+    // Search by name, name_urdu, sku, description, or category
     if (search) {
       where[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
         { name_urdu: { [Op.iLike]: `%${search}%` } },
         { sku: { [Op.iLike]: `%${search}%` } },
-        { item_id: { [Op.iLike]: `%${search}%` } }
+        { item_id: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { category: { [Op.iLike]: `%${search}%` } }
       ];
     }
 

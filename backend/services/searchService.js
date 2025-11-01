@@ -10,6 +10,7 @@ import Project from '../models/Project.js';
 import Payment from '../models/Payment.js';
 import Check from '../models/Check.js';
 import Token from '../models/Token.js';
+import Item from '../models/Item.js';
 import User from '../models/User.js';
 
 class SearchService {
@@ -18,7 +19,7 @@ class SearchService {
    */
   async globalSearch(query, filters = {}) {
     const {
-      entities = ['customers', 'orders', 'projects', 'payments', 'checks', 'tokens'],
+      entities = ['customers', 'orders', 'projects', 'payments', 'checks', 'tokens', 'items'],
       startDate,
       endDate,
       minAmount,
@@ -34,6 +35,7 @@ class SearchService {
       payments: [],
       checks: [],
       tokens: [],
+      items: [],
       summary: {
         totalResults: 0,
         searchQuery: query
@@ -89,7 +91,10 @@ class SearchService {
         if (query) {
           whereClause[Op.or] = [
             { order_id: { [Op.iLike]: `%${query}%` } },
-            { delivery_address: { [Op.iLike]: `%${query}%` } }
+            { delivery_address: { [Op.iLike]: `%${query}%` } },
+            { notes: { [Op.iLike]: `%${query}%` } },
+            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
+            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
           ];
         }
         if (status) {
@@ -104,11 +109,13 @@ class SearchService {
         const orders = await Order.findAll({
           where: whereClause,
           include: [
-            { model: Customer, as: 'customer' },
-            { model: Project, as: 'project' }
+            { model: Customer, as: 'customer', required: false },
+            { model: Project, as: 'project', required: false }
           ],
           limit: parseInt(limit),
-          order: [['created_at', 'DESC']]
+          order: [['created_at', 'DESC']],
+          subQuery: false,
+          distinct: true
         });
         results.orders = orders.map(o => ({
           ...o.toJSON(),
@@ -121,24 +128,28 @@ class SearchService {
     }
 
     // Search Projects
-    if (entities.includes('projects') && query) {
+    if (entities.includes('projects')) {
       try {
-        const whereClause = {
-          [Op.or]: [
+        const whereClause = { ...dateFilter };
+        if (query) {
+          whereClause[Op.or] = [
             { project_id: { [Op.iLike]: `%${query}%` } },
-            { project_name: { [Op.iLike]: `%${query}%` } }
-          ],
-          ...dateFilter
-        };
+            { project_name: { [Op.iLike]: `%${query}%` } },
+            { description: { [Op.iLike]: `%${query}%` } },
+            { '$customer.name$': { [Op.iLike]: `%${query}%` } }
+          ];
+        }
         if (status) {
           whereClause.status = status;
         }
 
         const projects = await Project.findAll({
           where: whereClause,
-          include: [{ model: Customer, as: 'customer' }],
+          include: [{ model: Customer, as: 'customer', required: false }],
           limit: parseInt(limit),
-          order: [['created_at', 'DESC']]
+          order: [['created_at', 'DESC']],
+          subQuery: false,
+          distinct: true
         });
         results.projects = projects.map(p => ({
           ...p.toJSON(),
@@ -157,7 +168,12 @@ class SearchService {
         if (query) {
           whereClause[Op.or] = [
             { payment_id: { [Op.iLike]: `%${query}%` } },
-            { notes: { [Op.iLike]: `%${query}%` } }
+            { notes: { [Op.iLike]: `%${query}%` } },
+            { description: { [Op.iLike]: `%${query}%` } },
+            { reference_number: { [Op.iLike]: `%${query}%` } },
+            { check_number: { [Op.iLike]: `%${query}%` } },
+            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
+            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
           ];
         }
         if (minAmount || maxAmount) {
@@ -169,12 +185,14 @@ class SearchService {
         const payments = await Payment.findAll({
           where: whereClause,
           include: [
-            { model: Customer, as: 'customer' },
-            { model: Order, as: 'order' },
-            { model: Project, as: 'project' }
+            { model: Customer, as: 'customer', required: false },
+            { model: Order, as: 'order', required: false },
+            { model: Project, as: 'project', required: false }
           ],
           limit: parseInt(limit),
-          order: [['created_at', 'DESC']]
+          order: [['created_at', 'DESC']],
+          subQuery: false,
+          distinct: true
         });
         results.payments = payments.map(p => ({
           ...p.toJSON(),
@@ -194,7 +212,10 @@ class SearchService {
           whereClause[Op.or] = [
             { check_id: { [Op.iLike]: `%${query}%` } },
             { check_number: { [Op.iLike]: `%${query}%` } },
-            { bank_name: { [Op.iLike]: `%${query}%` } }
+            { bank_name: { [Op.iLike]: `%${query}%` } },
+            { payee_name: { [Op.iLike]: `%${query}%` } },
+            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
+            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
           ];
         }
         if (status) {
@@ -209,11 +230,14 @@ class SearchService {
         const checks = await Check.findAll({
           where: whereClause,
           include: [
-            { model: Customer, as: 'customer' },
-            { model: Payment, as: 'payment' }
+            { model: Customer, as: 'customer', required: false },
+            { model: Project, as: 'project', required: false },
+            { model: Payment, as: 'payment', required: false }
           ],
           limit: parseInt(limit),
-          order: [['created_at', 'DESC']]
+          order: [['created_at', 'DESC']],
+          subQuery: false,
+          distinct: true
         });
         results.checks = checks.map(c => ({
           ...c.toJSON(),
@@ -226,17 +250,17 @@ class SearchService {
     }
 
     // Search Tokens
-    if (entities.includes('tokens') && query) {
+    if (entities.includes('tokens')) {
       try {
-        const whereClause = {
-          [Op.or]: [
+        const whereClause = { ...dateFilter };
+        if (query) {
+          whereClause[Op.or] = [
             { token_id: { [Op.iLike]: `%${query}%` } },
             { vehicle_number: { [Op.iLike]: `%${query}%` } },
             { driver_name: { [Op.iLike]: `%${query}%` } },
             { customer_name: { [Op.iLike]: `%${query}%` } }
-          ],
-          ...dateFilter
-        };
+          ];
+        }
         if (status) {
           whereClause.status = status;
         }
@@ -244,8 +268,8 @@ class SearchService {
         const tokens = await Token.findAll({
           where: whereClause,
           include: [
-            { model: Order, as: 'order' },
-            { model: Customer, as: 'customer' }
+            { model: Order, as: 'order', required: false },
+            { model: Customer, as: 'customer', required: false }
           ],
           limit: parseInt(limit),
           order: [['created_at', 'DESC']]
@@ -257,6 +281,36 @@ class SearchService {
         results.summary.totalResults += tokens.length;
       } catch (err) {
         console.error('Error searching tokens:', err);
+      }
+    }
+
+    // Search Items
+    if (entities.includes('items')) {
+      try {
+        const whereClause = { ...dateFilter };
+        if (query) {
+          whereClause[Op.or] = [
+            { item_id: { [Op.iLike]: `%${query}%` } },
+            { name: { [Op.iLike]: `%${query}%` } },
+            { name_urdu: { [Op.iLike]: `%${query}%` } },
+            { description: { [Op.iLike]: `%${query}%` } },
+            { sku: { [Op.iLike]: `%${query}%` } },
+            { category: { [Op.iLike]: `%${query}%` } }
+          ];
+        }
+
+        const items = await Item.findAll({
+          where: whereClause,
+          limit: parseInt(limit),
+          order: [['name', 'ASC']]
+        });
+        results.items = items.map(i => ({
+          ...i.toJSON(),
+          entityType: 'item'
+        }));
+        results.summary.totalResults += items.length;
+      } catch (err) {
+        console.error('Error searching items:', err);
       }
     }
 

@@ -31,7 +31,9 @@ class ProjectService {
     if (search) {
       where[Op.or] = [
         { project_id: { [Op.iLike]: `%${search}%` } },
-        { project_name: { [Op.iLike]: `%${search}%` } }
+        { project_name: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { '$customer.name$': { [Op.iLike]: `%${search}%` } }
       ];
     }
 
@@ -40,12 +42,14 @@ class ProjectService {
     const { count, rows } = await Project.findAndCountAll({
       where,
       include: [
-        { model: Customer, as: 'customer' },
+        { model: Customer, as: 'customer', required: false },
         { model: User, as: 'creator' }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
+      subQuery: false,
+      distinct: true
     });
 
     return {

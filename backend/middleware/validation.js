@@ -112,7 +112,7 @@ export const validatePayment = [
     .isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0'),
   body('payment_type')
     .notEmpty().withMessage('Payment type is required')
-    .isIn(['LOAN', 'ADVANCE', 'DEPOSIT', 'PAYMENT']).withMessage('Invalid payment type'),
+    .isIn(['LOAN', 'ADVANCE', 'DEPOSIT', 'PAYMENT', 'ORDER_PAYMENT', 'REFUND']).withMessage('Invalid payment type'),
   body('payment_method')
     .notEmpty().withMessage('Payment method is required')
     .isIn(['CASH', 'CHECK', 'BANK_TRANSFER', 'ONLINE']).withMessage('Invalid payment method'),
