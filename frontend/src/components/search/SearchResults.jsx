@@ -52,65 +52,107 @@ export default function SearchResults({ results }) {
       label: 'Orders',
       color: '#f59e0b',
       columns: ['Order ID', 'Customer', 'Date', 'Amount', 'Status'],
-      renderRow: (item) => [
-        item.order_id,
-        item.customer?.name || '-',
-        new Date(item.order_date).toLocaleDateString(),
-        `₨${parseFloat(item.final_amount || 0).toLocaleString()}`,
-        <Chip label={item.status} size="small" color={item.status === 'COMPLETED' ? 'success' : 'warning'} />
-      ]
+      renderRow: (item) => {
+        const statusColors = {
+          'COMPLETED': 'success',
+          'CONFIRMED': 'info',
+          'PENDING': 'warning',
+          'CANCELLED': 'error',
+          'DRAFT': 'default'
+        };
+        return [
+          item.order_id,
+          item.customer?.name || '-',
+          item.order_date ? new Date(item.order_date).toLocaleDateString() : '-',
+          `₨${parseFloat(item.final_amount || 0).toLocaleString()}`,
+          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
+        ];
+      }
     },
     projects: {
       icon: <ProjectsIcon />,
       label: 'Projects',
       color: '#3b82f6',
       columns: ['Project ID', 'Name', 'Customer', 'Status', 'Balance'],
-      renderRow: (item) => [
-        item.project_id,
-        item.project_name,
-        item.customer?.name || '-',
-        <Chip label={item.status} size="small" />,
-        `₨${parseFloat(item.balance || 0).toLocaleString()}`
-      ]
+      renderRow: (item) => {
+        const statusColors = {
+          'COMPLETED': 'success',
+          'IN_PROGRESS': 'info',
+          'PENDING': 'warning',
+          'CANCELLED': 'error',
+          'ON_HOLD': 'default'
+        };
+        return [
+          item.project_id,
+          item.project_name,
+          item.customer?.name || '-',
+          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />,
+          `₨${parseFloat(item.balance || 0).toLocaleString()}`
+        ];
+      }
     },
     payments: {
       icon: <PaymentsIcon />,
       label: 'Payments',
       color: '#10b981',
       columns: ['Payment ID', 'Customer', 'Amount', 'Method', 'Date'],
-      renderRow: (item) => [
-        item.payment_id,
-        item.customer?.name || '-',
-        `₨${parseFloat(item.amount || 0).toLocaleString()}`,
-        item.payment_method,
-        new Date(item.created_at).toLocaleDateString()
-      ]
+      renderRow: (item) => {
+        const methodLabels = {
+          'CASH': 'Cash',
+          'CHECK': 'Check',
+          'BANK_TRANSFER': 'Bank Transfer',
+          'ONLINE': 'Online'
+        };
+        return [
+          item.payment_id,
+          item.customer?.name || '-',
+          `₨${parseFloat(item.amount || 0).toLocaleString()}`,
+          methodLabels[item.payment_method] || item.payment_method || '-',
+          item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'
+        ];
+      }
     },
     checks: {
       icon: <ChecksIcon />,
       label: 'Checks',
       color: '#8b5cf6',
       columns: ['Check ID', 'Check Number', 'Bank', 'Amount', 'Status'],
-      renderRow: (item) => [
-        item.check_id,
-        item.check_number,
-        item.bank_name || '-',
-        `₨${parseFloat(item.amount || 0).toLocaleString()}`,
-        <Chip label={item.status} size="small" color={item.status === 'CLEARED' ? 'success' : 'warning'} />
-      ]
+      renderRow: (item) => {
+        const statusColors = {
+          'CLEARED': 'success',
+          'PENDING': 'warning',
+          'BOUNCED': 'error',
+          'CANCELLED': 'default'
+        };
+        return [
+          item.check_id,
+          item.check_number,
+          item.bank_name || '-',
+          `₨${parseFloat(item.amount || 0).toLocaleString()}`,
+          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
+        ];
+      }
     },
     tokens: {
       icon: <TokensIcon />,
       label: 'Tokens',
       color: '#ef4444',
       columns: ['Token ID', 'Customer', 'Vehicle', 'Driver', 'Status'],
-      renderRow: (item) => [
-        item.token_id,
-        item.customer_name || '-',
-        item.vehicle_number || '-',
-        item.driver_name || '-',
-        <Chip label={item.status} size="small" />
-      ]
+      renderRow: (item) => {
+        const statusColors = {
+          'COMPLETED': 'success',
+          'IN_TRANSIT': 'info',
+          'PENDING': 'warning',
+          'CANCELLED': 'error'
+        };
+        return [
+          item.token_id,
+          item.customer_name || '-',
+          item.vehicle_number || '-',
+          item.driver_name || '-',
+          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
+        ];
+      }
     },
     items: {
       icon: <ItemsIcon />,
@@ -136,7 +178,7 @@ export default function SearchResults({ results }) {
         if (!config) return null;
 
         return (
-          <Accordion key={entityType} defaultExpanded={items.length > 0}>
+          <Accordion key={entityType} defaultExpanded>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
                 <Box
@@ -183,17 +225,28 @@ export default function SearchResults({ results }) {
                             '&:hover': { bgcolor: 'action.hover' }
                           }}
                           onClick={() => {
-                            // Navigate to respective page
-                            const routes = {
-                              customers: '/customers',
-                              orders: '/orders',
-                              projects: '/projects',
-                              payments: '/payments',
-                              checks: '/checks',
-                              tokens: '/tokens',
-                              items: '/items',
+                            // Navigate to specific record detail page
+                            const getDetailRoute = () => {
+                              switch (entityType) {
+                                case 'customers':
+                                  return `/customers/${item.id}`;
+                                case 'orders':
+                                  return `/orders/${item.id}`;
+                                case 'projects':
+                                  return `/projects/${item.id}`;
+                                case 'payments':
+                                  return `/payments/${item.id}`;
+                                case 'checks':
+                                  return `/checks/${item.id}`;
+                                case 'tokens':
+                                  return `/tokens/${item.id}`;
+                                case 'items':
+                                  return `/items/${item.id}`;
+                                default:
+                                  return `/${entityType}`;
+                              }
                             };
-                            navigate(routes[entityType]);
+                            navigate(getDetailRoute());
                           }}
                         >
                           {rowData.map((cell, cellIdx) => (

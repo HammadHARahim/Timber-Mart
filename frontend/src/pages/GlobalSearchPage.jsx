@@ -28,6 +28,8 @@ import {
   Tabs,
   Tab,
   Alert,
+  Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -56,6 +58,7 @@ export default function GlobalSearchPage() {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Filter state
   const [selectedEntities, setSelectedEntities] = useState({
@@ -87,20 +90,32 @@ export default function GlobalSearchPage() {
   useEffect(() => {
     const saved = localStorage.getItem('savedSearches');
     if (saved) {
-      setSavedSearches(JSON.parse(saved));
+      try {
+        setSavedSearches(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load saved searches:', e);
+      }
     }
 
     const history = localStorage.getItem('searchHistory');
     if (history) {
-      setSearchHistory(JSON.parse(history));
+      try {
+        setSearchHistory(JSON.parse(history));
+      } catch (e) {
+        console.error('Failed to load search history:', e);
+      }
     }
 
     // Load last search filters
     const lastFilters = localStorage.getItem('lastSearchFilters');
     if (lastFilters) {
-      const parsed = JSON.parse(lastFilters);
-      setFilters(parsed.filters || {});
-      setSelectedEntities(parsed.entities || selectedEntities);
+      try {
+        const parsed = JSON.parse(lastFilters);
+        if (parsed.filters) setFilters(parsed.filters);
+        if (parsed.entities) setSelectedEntities(parsed.entities);
+      } catch (e) {
+        console.error('Failed to load last filters:', e);
+      }
     }
   }, []);
 
@@ -127,16 +142,18 @@ export default function GlobalSearchPage() {
       if (response.success) {
         setSearchResults(response.data);
 
-        // Add to search history
-        const historyItem = {
-          query: searchQuery,
-          filters: { ...filters },
-          entities: { ...selectedEntities },
-          timestamp: new Date().toISOString(),
-        };
-        const newHistory = [historyItem, ...searchHistory.slice(0, 9)]; // Keep last 10
-        setSearchHistory(newHistory);
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+        // Add to search history (only if query is not empty)
+        if (searchQuery.trim()) {
+          const historyItem = {
+            query: searchQuery.trim(),
+            filters: { ...filters },
+            entities: { ...selectedEntities },
+            timestamp: new Date().toISOString(),
+          };
+          const newHistory = [historyItem, ...searchHistory.slice(0, 9)]; // Keep last 10
+          setSearchHistory(newHistory);
+          localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+        }
 
         // Save last filters
         localStorage.setItem('lastSearchFilters', JSON.stringify({
@@ -164,18 +181,22 @@ export default function GlobalSearchPage() {
 
     switch (preset) {
       case 'today':
-        startDate = new Date(now.setHours(0, 0, 0, 0));
-        endDate = new Date(now.setHours(23, 59, 59, 999));
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
         break;
       case 'thisWeek':
         const first = now.getDate() - now.getDay() + 1;
-        startDate = new Date(now.setDate(first));
+        startDate = new Date(now);
+        startDate.setDate(first);
         startDate.setHours(0, 0, 0, 0);
         endDate = new Date();
         endDate.setHours(23, 59, 59, 999);
         break;
       case 'thisMonth':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate.setHours(0, 0, 0, 0);
         endDate = new Date();
         endDate.setHours(23, 59, 59, 999);
         break;
@@ -229,13 +250,13 @@ export default function GlobalSearchPage() {
   // Save current search
   const saveCurrentSearch = () => {
     if (!searchName.trim()) {
-      alert('Please enter a name for this search');
+      setError('Please enter a name for this search');
       return;
     }
 
     const newSearch = {
       id: Date.now(),
-      name: searchName,
+      name: searchName.trim(),
       query: searchQuery,
       filters: { ...filters },
       entities: { ...selectedEntities },
@@ -246,7 +267,7 @@ export default function GlobalSearchPage() {
     setSavedSearches(updated);
     localStorage.setItem('savedSearches', JSON.stringify(updated));
     setSearchName('');
-    alert('Search saved successfully!');
+    setSuccessMessage('Search saved successfully!');
   };
 
   // Load saved search
@@ -281,19 +302,23 @@ export default function GlobalSearchPage() {
     const headers = ['Type', 'ID', 'Name/Description', 'Date', 'Amount'];
     const rows = allResults.map(item => [
       item.type,
-      item.customer_id || item.order_id || item.project_id || item.payment_id || item.check_id || item.token_id,
-      item.name || item.customer_name || item.project_name || '-',
-      new Date(item.created_at).toLocaleDateString(),
-      item.amount || item.final_amount || item.balance || '-'
+      item.customer_id || item.order_id || item.project_id || item.payment_id || item.check_id || item.token_id || item.item_id || '-',
+      item.name || item.customer_name || item.project_name || item.project?.name || '-',
+      item.created_at ? new Date(item.created_at).toLocaleDateString() : '-',
+      item.amount || item.final_amount || item.balance || item.default_price || '-'
     ]);
 
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `search-results-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    setSuccessMessage('CSV exported successfully!');
   };
 
   return (
@@ -317,7 +342,7 @@ export default function GlobalSearchPage() {
           <Grid item xs={12} md={8}>
             <TextField
               fullWidth
-              placeholder="Search customers, orders, projects, payments, checks, tokens..."
+              placeholder="Search customers, orders, projects, payments, checks, tokens, items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -581,6 +606,21 @@ export default function GlobalSearchPage() {
         </Paper>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <Card sx={{ textAlign: 'center', py: 8 }}>
+          <CardContent>
+            <CircularProgress size={60} sx={{ mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Searching...
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Please wait while we search across all entities
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Empty State */}
       {!searchResults && !loading && (
         <Card sx={{ textAlign: 'center', py: 8 }}>
@@ -595,6 +635,18 @@ export default function GlobalSearchPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
