@@ -516,7 +516,29 @@ export default function GlobalSearchPage() {
             {searchHistory.length === 0 ? (
               <Typography color="text.secondary">No recent searches</Typography>
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.3)',
+                    },
+                  },
+                }}
+              >
                 {searchHistory.map((item, idx) => (
                   <Chip
                     key={idx}
@@ -526,7 +548,14 @@ export default function GlobalSearchPage() {
                       setFilters(item.filters);
                       setSelectedEntities(item.entities);
                     }}
-                    sx={{ justifyContent: 'flex-start' }}
+                    clickable
+                    sx={{
+                      maxWidth: 'fit-content',
+                      '&:hover': {
+                        backgroundColor: 'primary.light',
+                        color: 'primary.contrastText',
+                      }
+                    }}
                   />
                 ))}
               </Box>
@@ -559,18 +588,44 @@ export default function GlobalSearchPage() {
             {savedSearches.length === 0 ? (
               <Typography color="text.secondary">No saved searches</Typography>
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.3)',
+                    },
+                  },
+                }}
+              >
                 {savedSearches.map((search) => (
-                  <Box key={search.id} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <Chip
-                      label={search.name}
-                      onClick={() => loadSavedSearch(search)}
-                      sx={{ flexGrow: 1, justifyContent: 'flex-start' }}
-                    />
-                    <IconButton size="small" onClick={() => deleteSavedSearch(search.id)}>
-                      <ClearIcon />
-                    </IconButton>
-                  </Box>
+                  <Chip
+                    key={search.id}
+                    label={search.name}
+                    onClick={() => loadSavedSearch(search)}
+                    onDelete={() => deleteSavedSearch(search.id)}
+                    clickable
+                    sx={{
+                      maxWidth: 'fit-content',
+                      '&:hover': {
+                        backgroundColor: 'secondary.light',
+                        color: 'secondary.contrastText',
+                      }
+                    }}
+                  />
                 ))}
               </Box>
             )}
