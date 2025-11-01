@@ -102,12 +102,13 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { order_id: { [Op.iLike]: `%${query}%` } },
-            { delivery_address: { [Op.iLike]: `%${query}%` } },
-            { notes: { [Op.iLike]: `%${query}%` } },
-            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
-            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
+            { order_id: { [Op.iLike]: pattern } },
+            { delivery_address: { [Op.iLike]: pattern } },
+            { notes: { [Op.iLike]: pattern } },
+            { '$customer.name$': { [Op.iLike]: pattern } },
+            { '$project.project_name$': { [Op.iLike]: pattern } }
           ];
         }
         if (status) {
@@ -145,11 +146,12 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { project_id: { [Op.iLike]: `%${query}%` } },
-            { project_name: { [Op.iLike]: `%${query}%` } },
-            { description: { [Op.iLike]: `%${query}%` } },
-            { '$customer.name$': { [Op.iLike]: `%${query}%` } }
+            { project_id: { [Op.iLike]: pattern } },
+            { project_name: { [Op.iLike]: pattern } },
+            { description: { [Op.iLike]: pattern } },
+            { '$customer.name$': { [Op.iLike]: pattern } }
           ];
         }
         if (status) {
@@ -179,14 +181,15 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { payment_id: { [Op.iLike]: `%${query}%` } },
-            { notes: { [Op.iLike]: `%${query}%` } },
-            { description: { [Op.iLike]: `%${query}%` } },
-            { reference_number: { [Op.iLike]: `%${query}%` } },
-            { check_number: { [Op.iLike]: `%${query}%` } },
-            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
-            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
+            { payment_id: { [Op.iLike]: pattern } },
+            { notes: { [Op.iLike]: pattern } },
+            { description: { [Op.iLike]: pattern } },
+            { reference_number: { [Op.iLike]: pattern } },
+            { check_number: { [Op.iLike]: pattern } },
+            { '$customer.name$': { [Op.iLike]: pattern } },
+            { '$project.project_name$': { [Op.iLike]: pattern } }
           ];
         }
         if (minAmount || maxAmount) {
@@ -222,13 +225,14 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { check_id: { [Op.iLike]: `%${query}%` } },
-            { check_number: { [Op.iLike]: `%${query}%` } },
-            { bank_name: { [Op.iLike]: `%${query}%` } },
-            { payee_name: { [Op.iLike]: `%${query}%` } },
-            { '$customer.name$': { [Op.iLike]: `%${query}%` } },
-            { '$project.project_name$': { [Op.iLike]: `%${query}%` } }
+            { check_id: { [Op.iLike]: pattern } },
+            { check_number: { [Op.iLike]: pattern } },
+            { bank_name: { [Op.iLike]: pattern } },
+            { payee_name: { [Op.iLike]: pattern } },
+            { '$customer.name$': { [Op.iLike]: pattern } },
+            { '$project.project_name$': { [Op.iLike]: pattern } }
           ];
         }
         if (status) {
@@ -267,11 +271,12 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { token_id: { [Op.iLike]: `%${query}%` } },
-            { vehicle_number: { [Op.iLike]: `%${query}%` } },
-            { driver_name: { [Op.iLike]: `%${query}%` } },
-            { customer_name: { [Op.iLike]: `%${query}%` } }
+            { token_id: { [Op.iLike]: pattern } },
+            { vehicle_number: { [Op.iLike]: pattern } },
+            { driver_name: { [Op.iLike]: pattern } },
+            { customer_name: { [Op.iLike]: pattern } }
           ];
         }
         if (status) {
@@ -302,13 +307,14 @@ class SearchService {
       try {
         const whereClause = { ...dateFilter };
         if (query) {
+          const pattern = searchMode === 'exact' ? query : `%${query}%`;
           whereClause[Op.or] = [
-            { item_id: { [Op.iLike]: `%${query}%` } },
-            { name: { [Op.iLike]: `%${query}%` } },
-            { name_urdu: { [Op.iLike]: `%${query}%` } },
-            { description: { [Op.iLike]: `%${query}%` } },
-            { sku: { [Op.iLike]: `%${query}%` } },
-            { category: { [Op.iLike]: `%${query}%` } }
+            { item_id: { [Op.iLike]: pattern } },
+            { name: { [Op.iLike]: pattern } },
+            { name_urdu: { [Op.iLike]: pattern } },
+            { description: { [Op.iLike]: pattern } },
+            { sku: { [Op.iLike]: pattern } },
+            { category: { [Op.iLike]: pattern } }
           ];
         }
 
