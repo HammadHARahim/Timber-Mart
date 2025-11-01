@@ -52,13 +52,39 @@ export default function OrderForm({
   // Initialize form with order data if editing
   useEffect(() => {
     if (order) {
+      // Transform existing order items to ensure proper field types
+      // Note: When an order is fetched, items have:
+      //   - item.id = OrderItem's primary key
+      //   - item.item_id = FK to the items table (THIS is what we need)
+      //   - item.item.id = The actual Item's primary key from the nested item object
+      const transformedItems = (order.items || []).map(item => {
+        // item_id should be the FK to items table
+        // It could be in item.item_id OR item.item.id depending on the API response structure
+        const correctItemId = item.item_id || (item.item && item.item.id);
+
+        return {
+          item_id: correctItemId,
+          item_name: item.item_name,
+          item_name_urdu: item.item_name_urdu,
+          unit: item.unit,
+          quantity: parseFloat(item.quantity) || 0,
+          unit_price: parseFloat(item.unit_price) || 0,
+          discount_percent: parseFloat(item.discount_percent) || 0,
+          notes: item.notes || '',
+          // Preserve calculated fields if they exist
+          total_price: parseFloat(item.total_price) || 0,
+          discount_amount: parseFloat(item.discount_amount) || 0,
+          final_amount: parseFloat(item.final_amount) || 0
+        };
+      });
+
       setFormData({
         customer_id: order.customer_id || '',
         project_id: order.project_id || '',
         delivery_date: order.delivery_date ? new Date(order.delivery_date).toISOString().split('T')[0] : '',
         delivery_address: order.delivery_address || '',
         notes: order.notes || '',
-        items: order.items || []
+        items: transformedItems
       });
     } else {
       setFormData({
@@ -167,13 +193,20 @@ export default function OrderForm({
         delivery_address: formData.delivery_address.trim() || '',
         notes: formData.notes.trim() || '',
         apply_credit: formData.apply_credit,
-        items: formData.items.map(item => ({
-          item_id: item.item_id,
-          quantity: parseFloat(item.quantity),
-          unit_price: parseFloat(item.unit_price),
-          discount_percent: parseFloat(item.discount_percent) || 0,
-          notes: item.notes || ''
-        }))
+        items: formData.items.map(item => {
+          // Ensure all numeric values are valid numbers, not NaN or empty strings
+          const quantity = parseFloat(item.quantity);
+          const unitPrice = parseFloat(item.unit_price);
+          const discountPercent = parseFloat(item.discount_percent);
+
+          return {
+            item_id: parseInt(item.item_id),
+            quantity: isNaN(quantity) ? 0 : quantity,
+            unit_price: isNaN(unitPrice) ? 0 : unitPrice,
+            discount_percent: isNaN(discountPercent) ? 0 : discountPercent,
+            notes: item.notes || ''
+          };
+        })
       };
 
       await onSubmit(orderData);

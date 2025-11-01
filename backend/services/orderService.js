@@ -287,10 +287,16 @@ class OrderService {
         throw new Error('Order not found');
       }
 
-      const { customer_id, project_id, delivery_date, delivery_address, notes, items } = orderData;
+      const { customer_id, project_id, delivery_date, delivery_address, notes, items, apply_credit } = orderData;
 
       // If items are being updated, recalculate totals
       if (items && items.length > 0) {
+        // Get customer for credit calculation
+        const customer = await Customer.findByPk(customer_id || order.customer_id, { transaction });
+        if (!customer) {
+          throw new Error('Customer not found');
+        }
+
         // Delete existing order items
         await OrderItem.destroy({
           where: { order_id: id },
@@ -335,7 +341,47 @@ class OrderService {
         }
 
         const final_amount = total_amount - discount_amount;
-        const balance_amount = final_amount - order.paid_amount;
+
+        // Calculate credit application
+        // Note: We need to recalculate from scratch based on the new final_amount
+        let credit_applied = 0;
+        let paid_amount = parseFloat(order.paid_amount) || 0; // Preserve existing payments (excluding credit)
+
+        // Restore customer's previously applied credit (if any) back to their balance
+        if (order.credit_applied && parseFloat(order.credit_applied) > 0) {
+          const previousCredit = parseFloat(order.credit_applied);
+          await customer.update({
+            balance: parseFloat(customer.balance) - previousCredit // Return credit to customer
+          }, { transaction });
+          // Subtract previous credit from paid_amount since we're recalculating
+          paid_amount -= previousCredit;
+        }
+
+        // Re-fetch customer to get updated balance
+        await customer.reload({ transaction });
+
+        // Only apply credit if apply_credit is true and there's available credit
+        if (apply_credit && parseFloat(customer.balance) < 0) {
+          const available_credit = Math.abs(parseFloat(customer.balance));
+          const remaining_balance = final_amount - paid_amount;
+          credit_applied = Math.min(available_credit, remaining_balance);
+          paid_amount += credit_applied;
+
+          // Update customer balance (reduce their credit)
+          await customer.update({
+            balance: parseFloat(customer.balance) + credit_applied
+          }, { transaction });
+        }
+
+        const balance_amount = final_amount - paid_amount;
+
+        // Determine payment status
+        let payment_status = 'UNPAID';
+        if (balance_amount <= 0) {
+          payment_status = 'PAID';
+        } else if (paid_amount > 0) {
+          payment_status = 'PARTIAL';
+        }
 
         // Update order totals
         await order.update({
@@ -347,7 +393,10 @@ class OrderService {
           total_amount,
           discount_amount,
           final_amount,
+          credit_applied,
+          paid_amount,
           balance_amount,
+          payment_status,
           updated_by_user_id: userId,
           sync_status: 'SYNCED',
           last_synced_at: new Date()

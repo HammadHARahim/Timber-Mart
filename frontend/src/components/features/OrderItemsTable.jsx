@@ -59,9 +59,18 @@ export default function OrderItemsTable({ items = [], onChange, readOnly = false
   // Update item field
   const handleUpdateItem = (index, field, value) => {
     const updatedItems = [...orderItems];
+
+    // For numeric fields, convert to number or keep as string for input
+    // but ensure we don't store empty strings as they cause validation issues
+    let processedValue = value;
+    if (['quantity', 'unit_price', 'discount_percent'].includes(field)) {
+      // Keep the raw value for the input field, but it will be validated on submit
+      processedValue = value === '' ? 0 : value;
+    }
+
     updatedItems[index] = {
       ...updatedItems[index],
-      [field]: value
+      [field]: processedValue
     };
 
     // Recalculate totals if numeric field changed

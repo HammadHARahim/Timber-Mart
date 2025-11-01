@@ -28,6 +28,10 @@ import {
   Edit as EditIcon,
   Payment as PaymentIcon,
   ArrowBack as BackIcon,
+  CheckCircle as ConfirmIcon,
+  PlayArrow as InProgressIcon,
+  Done as CompleteIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import StatusBadge from '../shared/StatusBadge.jsx';
 import OrderItemsTable from './OrderItemsTable.jsx';
@@ -40,9 +44,7 @@ export default function OrderDetail({
   canEdit,
   onAddPayment
 }) {
-  const [showStatusModal, setShowStatusModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState(order?.status || 'PENDING');
   const [paymentData, setPaymentData] = useState({
     amount: order?.balance_amount || 0,
     payment_method: 'CASH',
@@ -52,13 +54,6 @@ export default function OrderDetail({
   if (!order) {
     return <div className="empty-state">Order not found</div>;
   }
-
-  const handleStatusUpdate = () => {
-    if (selectedStatus !== order.status) {
-      onStatusChange(order.id, selectedStatus);
-    }
-    setShowStatusModal(false);
-  };
 
   const handleAddPayment = () => {
     if (onAddPayment) {
@@ -141,7 +136,7 @@ export default function OrderDetail({
               >
                 Back
               </Button>
-              {canEdit && (
+              {canEdit && !(order.payment_status === 'PAID' && order.status === 'CONFIRMED') && (
                 <Button
                   variant="outlined"
                   startIcon={<EditIcon />}
@@ -170,20 +165,59 @@ export default function OrderDetail({
               Status Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Order Status:
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <StatusBadge status={order.status} type="order" />
-                  {canEdit && (
-                    <Button
-                      size="small"
-                      variant="text"
-                      onClick={() => setShowStatusModal(true)}
-                    >
-                      Change
-                    </Button>
+                  {canEdit && !(order.payment_status === 'PAID' && order.status === 'CONFIRMED') && (
+                    <>
+                      {order.status !== 'CONFIRMED' && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          startIcon={<ConfirmIcon />}
+                          onClick={() => onStatusChange(order.id, 'CONFIRMED')}
+                        >
+                          Confirm
+                        </Button>
+                      )}
+                      {order.status !== 'IN_PROGRESS' && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          startIcon={<InProgressIcon />}
+                          onClick={() => onStatusChange(order.id, 'IN_PROGRESS')}
+                        >
+                          In Progress
+                        </Button>
+                      )}
+                      {order.status !== 'COMPLETED' && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="success"
+                          startIcon={<CompleteIcon />}
+                          onClick={() => onStatusChange(order.id, 'COMPLETED')}
+                        >
+                          Delivered
+                        </Button>
+                      )}
+                      {order.status !== 'CANCELLED' && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<CancelIcon />}
+                          onClick={() => onStatusChange(order.id, 'CANCELLED')}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </>
                   )}
                 </Box>
               </Grid>
@@ -407,57 +441,6 @@ export default function OrderDetail({
           </Box>
         </Paper>
       </Box>
-
-      {/* Status Change Modal */}
-      <Dialog
-        open={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            Change Order Status
-            <IconButton onClick={() => setShowStatusModal(false)} size="small">
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Current Status:
-              </Typography>
-              <StatusBadge status={order.status} type="order" />
-            </Box>
-            <Select
-              fullWidth
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              label="New Status"
-            >
-              <MenuItem value="PENDING">Pending</MenuItem>
-              <MenuItem value="CONFIRMED">Confirmed</MenuItem>
-              <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-              <MenuItem value="COMPLETED">Completed</MenuItem>
-              <MenuItem value="CANCELLED">Cancelled</MenuItem>
-            </Select>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowStatusModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleStatusUpdate}
-            disabled={selectedStatus === order.status}
-          >
-            Update Status
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Payment Modal */}
       <Dialog

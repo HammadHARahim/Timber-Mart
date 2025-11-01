@@ -125,7 +125,8 @@ export default function OrdersPage() {
         ),
       },
       {
-        accessorKey: 'customer.name',
+        accessorFn: (row) => row.customer?.name || null,
+        id: 'customer_name',
         header: 'Customer',
         size: 180,
         Cell: ({ cell }) => (
@@ -135,7 +136,8 @@ export default function OrdersPage() {
         ),
       },
       {
-        accessorKey: 'project.name',
+        accessorFn: (row) => row.project?.project_name || null,
+        id: 'project_name',
         header: 'Project',
         size: 150,
         Cell: ({ cell }) => (
@@ -277,9 +279,29 @@ export default function OrdersPage() {
   };
 
   // Handle edit order
-  const handleEdit = (order) => {
-    setSelectedOrder(order);
-    setShowForm(true);
+  const handleEdit = async (order) => {
+    // Prevent editing if order is both fully paid AND confirmed
+    // This allows status changes on paid orders and payment adjustments on confirmed orders
+    if (order.payment_status === 'PAID' && order.status === 'CONFIRMED') {
+      setError('Cannot edit a confirmed and fully paid order. Please create a new order or contact support.');
+      return;
+    }
+
+    // Fetch full order details with items before editing
+    // This is necessary because the table view doesn't have full item details
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await orderService.getOrderById(order.id);
+      setSelectedOrder(response.data);
+      setShowForm(true);
+      setView('list'); // Close detail view when opening edit form
+    } catch (err) {
+      console.error('Failed to fetch order for editing:', err);
+      setError('Failed to load order details for editing');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle form submit (create/update)
@@ -413,13 +435,20 @@ export default function OrdersPage() {
           </IconButton>
         </Tooltip>
         {hasPermission('order:edit') && (
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={() => handleEdit(row.original)}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+          <Tooltip title={
+            (row.original.payment_status === 'PAID' && row.original.status === 'CONFIRMED')
+              ? 'Cannot edit confirmed and paid orders'
+              : 'Edit'
+          }>
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => handleEdit(row.original)}
+                disabled={row.original.payment_status === 'PAID' && row.original.status === 'CONFIRMED'}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
         )}
         {hasPermission('order:delete') && (

@@ -90,6 +90,16 @@ export default function ChecksPage() {
   const columns = useMemo(
     () => [
       {
+        accessorKey: 'check_id',
+        header: 'Check ID',
+        size: 200,
+        Cell: ({ cell }) => (
+          <Typography variant="body2" fontWeight={600} fontFamily="monospace" color="primary.main">
+            {cell.getValue()}
+          </Typography>
+        ),
+      },
+      {
         accessorKey: 'check_number',
         header: 'Check Number',
         size: 150,
@@ -157,28 +167,31 @@ export default function ChecksPage() {
         ),
       },
       {
-        accessorKey: 'issue_date',
-        header: 'Issue Date',
-        size: 120,
-        Cell: ({ cell }) => new Date(cell.getValue()).toLocaleDateString(),
-      },
-      {
-        accessorKey: 'due_date',
-        header: 'Due Date',
+        accessorKey: 'check_date',
+        header: 'Check Date',
         size: 120,
         Cell: ({ cell }) => {
-          const dueDate = new Date(cell.getValue());
-          const today = new Date();
-          const isOverdue = dueDate < today;
-          return (
-            <Typography
-              variant="body2"
-              color={isOverdue ? 'error.main' : 'text.primary'}
-              fontWeight={isOverdue ? 600 : 400}
-            >
-              {dueDate.toLocaleDateString()}
-            </Typography>
-          );
+          const value = cell.getValue();
+          if (!value) return '-';
+          try {
+            return new Date(value).toLocaleDateString();
+          } catch {
+            return '-';
+          }
+        },
+      },
+      {
+        accessorKey: 'cleared_date',
+        header: 'Cleared Date',
+        size: 120,
+        Cell: ({ cell }) => {
+          const value = cell.getValue();
+          if (!value) return '-';
+          try {
+            return new Date(value).toLocaleDateString();
+          } catch {
+            return '-';
+          }
         },
       },
       {
