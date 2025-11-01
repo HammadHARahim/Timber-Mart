@@ -3,7 +3,7 @@
 // Phase 9: Advanced Search & Filtering
 // ============================================================================
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Box,
   Container,
@@ -30,6 +30,8 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,6 +42,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   Clear as ClearIcon,
   Refresh as RefreshIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import { api } from '../utils/apiClient';
 import SearchResults from '../components/search/SearchResults';
@@ -59,6 +62,8 @@ export default function GlobalSearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [searchMode, setSearchMode] = useState('fuzzy'); // 'fuzzy' or 'exact'
+  const [liveSearch, setLiveSearch] = useState(true);
 
   // Filter state
   const [selectedEntities, setSelectedEntities] = useState({
@@ -85,6 +90,9 @@ export default function GlobalSearchPage() {
 
   // Search history
   const [searchHistory, setSearchHistory] = useState([]);
+
+  // Debounce timer ref
+  const debounceTimer = useRef(null);
 
   // Load saved searches and history from localStorage
   useEffect(() => {
@@ -120,9 +128,12 @@ export default function GlobalSearchPage() {
   }, []);
 
   // Handle search
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async (isLiveSearch = false) => {
     if (!searchQuery.trim() && !hasActiveFilters()) {
-      setError('Please enter a search query or apply filters');
+      if (!isLiveSearch) {
+        setError('Please enter a search query or apply filters');
+      }
+      setSearchResults(null);
       return;
     }
 
@@ -132,7 +143,8 @@ export default function GlobalSearchPage() {
     try {
       // Build query parameters
       const params = {
-        q: searchQuery,
+        q: searchQuery.trim(),
+        searchMode: searchMode, // Pass search mode to backend
         entities: Object.keys(selectedEntities).filter(k => selectedEntities[k]).join(','),
         ...filters
       };
@@ -142,12 +154,13 @@ export default function GlobalSearchPage() {
       if (response.success) {
         setSearchResults(response.data);
 
-        // Add to search history (only if query is not empty)
-        if (searchQuery.trim()) {
+        // Add to search history (only if query is not empty and not a live search)
+        if (searchQuery.trim() && !isLiveSearch) {
           const historyItem = {
             query: searchQuery.trim(),
             filters: { ...filters },
             entities: { ...selectedEntities },
+            searchMode: searchMode,
             timestamp: new Date().toISOString(),
           };
           const newHistory = [historyItem, ...searchHistory.slice(0, 9)]; // Keep last 10
@@ -156,23 +169,54 @@ export default function GlobalSearchPage() {
         }
 
         // Save last filters
-        localStorage.setItem('lastSearchFilters', JSON.stringify({
-          filters,
-          entities: selectedEntities
-        }));
+        if (!isLiveSearch) {
+          localStorage.setItem('lastSearchFilters', JSON.stringify({
+            filters,
+            entities: selectedEntities,
+            searchMode
+          }));
+        }
       }
     } catch (err) {
       console.error('Search error:', err);
-      setError('Failed to perform search. Please try again.');
+      if (!isLiveSearch) {
+        setError('Failed to perform search. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedEntities, filters, searchMode, searchHistory]);
 
   const hasActiveFilters = () => {
     return filters.startDate || filters.endDate || filters.minAmount ||
            filters.maxAmount || filters.status;
   };
+
+  // Live search effect with debouncing
+  useEffect(() => {
+    if (!liveSearch) return;
+
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Set new timer for debounced search
+    if (searchQuery.trim()) {
+      debounceTimer.current = setTimeout(() => {
+        handleSearch(true); // true indicates live search
+      }, 500); // 500ms debounce
+    } else {
+      setSearchResults(null);
+    }
+
+    // Cleanup
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchQuery, liveSearch, handleSearch]);
 
   // Handle quick filters
   const applyQuickFilter = (preset) => {
@@ -284,6 +328,13 @@ export default function GlobalSearchPage() {
     localStorage.setItem('savedSearches', JSON.stringify(updated));
   };
 
+  // Clear all recent searches
+  const clearRecentSearches = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+    setSuccessMessage('Recent searches cleared!');
+  };
+
   // Export results
   const exportResults = () => {
     if (!searchResults) return;
@@ -382,6 +433,38 @@ export default function GlobalSearchPage() {
             </Box>
           </Grid>
         </Grid>
+
+        {/* Search Mode and Live Search Controls */}
+        <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Search Mode:
+            </Typography>
+            <ToggleButtonGroup
+              value={searchMode}
+              exclusive
+              onChange={(e, value) => value && setSearchMode(value)}
+              size="small"
+            >
+              <ToggleButton value="fuzzy">
+                Fuzzy
+              </ToggleButton>
+              <ToggleButton value="exact">
+                Exact
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={liveSearch}
+                onChange={(e) => setLiveSearch(e.target.checked)}
+                size="small"
+              />
+            }
+            label={<Typography variant="body2">Live Search</Typography>}
+          />
+        </Box>
 
         {/* Quick Filters */}
         <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -516,7 +599,21 @@ export default function GlobalSearchPage() {
             {searchHistory.length === 0 ? (
               <Typography color="text.secondary">No recent searches</Typography>
             ) : (
-              <Box
+              <>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {searchHistory.length} recent {searchHistory.length === 1 ? 'search' : 'searches'}
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<DeleteSweepIcon />}
+                    onClick={clearRecentSearches}
+                    color="error"
+                  >
+                    Clear All
+                  </Button>
+                </Box>
+                <Box
                 sx={{
                   display: 'flex',
                   flexWrap: 'wrap',
@@ -559,6 +656,7 @@ export default function GlobalSearchPage() {
                   />
                 ))}
               </Box>
+              </>
             )}
           </Box>
         </TabPanel>

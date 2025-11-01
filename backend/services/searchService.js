@@ -25,6 +25,7 @@ class SearchService {
       minAmount,
       maxAmount,
       status,
+      searchMode = 'fuzzy', // 'fuzzy' or 'exact'
       limit = 50
     } = filters;
 
@@ -38,7 +39,8 @@ class SearchService {
       items: [],
       summary: {
         totalResults: 0,
-        searchQuery: query
+        searchQuery: query,
+        searchMode: searchMode
       }
     };
 
@@ -58,16 +60,27 @@ class SearchService {
       };
     }
 
+    // Helper function to build search pattern based on mode
+    const getSearchPattern = (field, value) => {
+      if (searchMode === 'exact') {
+        // Exact match - search for the exact phrase
+        return { [field]: { [Op.iLike]: value } };
+      } else {
+        // Fuzzy match - search with wildcards
+        return { [field]: { [Op.iLike]: `%${value}%` } };
+      }
+    };
+
     // Search Customers
     if (entities.includes('customers') && query) {
       try {
         const customers = await Customer.findAll({
           where: {
             [Op.or]: [
-              { name: { [Op.iLike]: `%${query}%` } },
-              { phone: { [Op.iLike]: `%${query}%` } },
-              { email: { [Op.iLike]: `%${query}%` } },
-              { customer_id: { [Op.iLike]: `%${query}%` } }
+              getSearchPattern('name', query),
+              getSearchPattern('phone', query),
+              getSearchPattern('email', query),
+              getSearchPattern('customer_id', query)
             ],
             ...dateFilter
           },

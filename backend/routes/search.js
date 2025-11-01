@@ -18,7 +18,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res) => {
   try {
-    const { q, entities, startDate, endDate, minAmount, maxAmount, status, limit } = req.query;
+    const { q, entities, startDate, endDate, minAmount, maxAmount, status, searchMode, limit } = req.query;
 
     const filters = {
       entities: entities ? entities.split(',') : undefined,
@@ -27,6 +27,7 @@ router.get('/', async (req, res) => {
       minAmount,
       maxAmount,
       status,
+      searchMode: searchMode || 'fuzzy',
       limit
     };
 
