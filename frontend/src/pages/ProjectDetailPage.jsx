@@ -1,19 +1,19 @@
 // ============================================================================
-// Project Detail Page - Drawer-based detail view
+// Project Detail Page - Matches OrderDetail visual pattern
 // ============================================================================
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Drawer,
   Box,
-  Typography,
-  IconButton,
-  Divider,
-  Grid,
+  Button,
   Card,
   CardContent,
   Chip,
+  Divider,
+  Grid,
+  Paper,
+  Typography,
   CircularProgress,
   Alert,
   Table,
@@ -22,34 +22,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import {
-  Close as CloseIcon,
+  ArrowBack as BackIcon,
   Edit as EditIcon,
   Business as ProjectIcon,
   Person as PersonIcon,
-  ShoppingCart as OrderIcon,
-  Payment as PaymentIcon,
-  Receipt as CheckIcon,
   CalendarToday as CalendarIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import { api } from '../utils/apiClient';
-
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`project-tabpanel-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -58,7 +40,6 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
   const [relatedData, setRelatedData] = useState({
     orders: [],
     payments: [],
@@ -106,169 +87,257 @@ export default function ProjectDetailPage() {
   };
 
   const handleEdit = () => {
-    navigate(`/projects/edit/${id}`);
+    navigate('/projects', { state: { editProjectId: id } });
   };
 
   const getStatusInfo = (status) => {
     const statuses = {
-      PENDING: { color: 'warning', icon: '⏳' },
-      IN_PROGRESS: { color: 'info', icon: '🔨' },
-      COMPLETED: { color: 'success', icon: '✅' },
-      ON_HOLD: { color: 'default', icon: '⏸️' },
-      CANCELLED: { color: 'error', icon: '❌' },
+      PENDING: { color: 'warning', label: 'Pending' },
+      IN_PROGRESS: { color: 'info', label: 'In Progress' },
+      COMPLETED: { color: 'success', label: 'Completed' },
+      ON_HOLD: { color: 'default', label: 'On Hold' },
+      CANCELLED: { color: 'error', label: 'Cancelled' },
     };
     return statuses[status] || statuses.PENDING;
   };
 
-  return (
-    <Drawer
-      anchor="right"
-      open={true}
-      onClose={handleClose}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: '90%', md: '70%', lg: '50%' },
-          maxWidth: 800,
-        },
-      }}
-    >
-      {/* Header */}
+  if (loading) {
+    return (
       <Box
         sx={{
-          p: 2,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: '#3b82f6',
-          color: 'white',
+          justifyContent: 'center',
+          zIndex: 1300,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ProjectIcon />
-          <Typography variant="h6" fontWeight={600}>
-            Project Details
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton onClick={handleEdit} sx={{ color: 'inherit' }}>
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={handleClose} sx={{ color: 'inherit' }}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
+        <CircularProgress />
       </Box>
+    );
+  }
 
-      {/* Content */}
-      <Box sx={{ height: '100%', overflow: 'auto' }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
+  if (error || !project) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300,
+          p: 2,
+        }}
+        onClick={handleClose}
+      >
+        <Alert severity="error">{error || 'Project not found'}</Alert>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1300,
+        p: 2,
+      }}
+      onClick={handleClose}
+    >
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          maxWidth: 1200,
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: 24,
+          '&::-webkit-scrollbar': {
+            width: '10px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+            margin: '8px 0',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.400',
+            borderRadius: '10px',
+            border: '2px solid',
+            borderColor: 'background.paper',
+            '&:hover': {
+              bgcolor: 'grey.600',
+            },
+          },
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Paper elevation={0} sx={{ p: 4 }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                {project.project_name || project.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                {project.project_id}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="outlined"
+                startIcon={<BackIcon />}
+                onClick={handleClose}
+              >
+                Back
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={handleEdit}
+              >
+                Edit
+              </Button>
+            </Box>
           </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {error}
-          </Alert>
-        ) : project ? (
-          <>
-            {/* Main Info */}
-            <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
-                <Box>
-                  <Typography variant="h5" fontWeight={700} gutterBottom>
-                    {project.project_name || project.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={`${getStatusInfo(project.status).icon} ${project.status}`}
-                      size="small"
-                      color={getStatusInfo(project.status).color}
-                    />
-                    <Chip
-                      label={project.project_id}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    Balance
-                  </Typography>
-                  <Typography variant="h6" color={project.balance > 0 ? 'error.main' : 'success.main'}>
-                    Rs. {parseFloat(project.balance || 0).toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
+          <Divider sx={{ mb: 3 }} />
 
-              {/* Financial Summary */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} sm={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Total Amount
-                      </Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        Rs. {parseFloat(project.total_amount || 0).toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={6} sm={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Paid Amount
-                      </Typography>
-                      <Typography variant="h6" fontWeight={600} color="success.main">
-                        Rs. {parseFloat(project.paid_amount || 0).toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={6} sm={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Balance
-                      </Typography>
-                      <Typography variant="h6" fontWeight={600} color="error.main">
-                        Rs. {parseFloat(project.balance || 0).toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={6} sm={3}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                        Discount
-                      </Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        Rs. {parseFloat(project.discount || 0).toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
+          {/* Project Information */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Project Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Status:
+                </Typography>
+                <Chip
+                  label={getStatusInfo(project.status).label}
+                  size="small"
+                  color={getStatusInfo(project.status).color}
+                />
               </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Location:
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {project.location || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Start Date:
+                </Typography>
+                <Typography variant="body1">
+                  {project.start_date ? new Date(project.start_date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  End Date:
+                </Typography>
+                <Typography variant="body1">
+                  {project.end_date ? new Date(project.end_date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : 'N/A'}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
 
-              {/* Customer Info */}
-              {project.customer && (
+          <Divider sx={{ my: 3 }} />
+
+          {/* Financial Summary */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Financial Summary
+            </Typography>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+              <CardContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Amount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      Rs. {parseFloat(project.total_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Paid Amount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="success.main">
+                      Rs. {parseFloat(project.paid_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Balance:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="error.main">
+                      Rs. {parseFloat(project.balance || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Discount:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      Rs. {parseFloat(project.discount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Customer */}
+          {project.customer && (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Customer
+                </Typography>
                 <Card
                   variant="outlined"
-                  sx={{ mb: 3, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                  sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
                   onClick={() => navigate(`/customers/${project.customer.id}`)}
                 >
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <PersonIcon color="primary" fontSize="small" />
-                      <Typography variant="caption" color="text.secondary">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <PersonIcon color="primary" />
+                      <Typography variant="body2" color="text.secondary">
                         Customer
                       </Typography>
                     </Box>
@@ -282,233 +351,224 @@ export default function ProjectDetailPage() {
                     )}
                   </CardContent>
                 </Card>
-              )}
-
-              {/* Dates */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <CalendarIcon color="primary" fontSize="small" />
-                        <Typography variant="caption" color="text.secondary">
-                          Start Date
-                        </Typography>
-                      </Box>
-                      <Typography variant="body1" fontWeight={600}>
-                        {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <CalendarIcon color="primary" fontSize="small" />
-                        <Typography variant="caption" color="text.secondary">
-                          End Date
-                        </Typography>
-                      </Box>
-                      <Typography variant="body1" fontWeight={600}>
-                        {project.end_date ? new Date(project.end_date).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Location */}
-              {project.location && (
-                <Card variant="outlined" sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Location
-                    </Typography>
-                    <Typography variant="body1">{project.location}</Typography>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Description */}
-              {project.description && (
-                <Card variant="outlined" sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Description
-                    </Typography>
-                    <Typography variant="body2">{project.description}</Typography>
-                  </CardContent>
-                </Card>
-              )}
-            </Box>
-
-            <Divider />
-
-            {/* Tabs for Related Data */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-                <Tab label={`Orders (${relatedData.orders.length})`} />
-                <Tab label={`Payments (${relatedData.payments.length})`} />
-                <Tab label={`Checks (${relatedData.checks.length})`} />
-              </Tabs>
-            </Box>
-
-            {/* Orders Tab */}
-            <TabPanel value={tabValue} index={0}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.orders.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Order ID</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.orders.map((order) => (
-                          <TableRow
-                            key={order.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/orders/${order.id}`)}
-                          >
-                            <TableCell>{order.order_id}</TableCell>
-                            <TableCell>
-                              {order.order_date ? new Date(order.order_date).toLocaleDateString() : '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={order.status} size="small" />
-                            </TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(order.final_amount || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No orders found
-                  </Typography>
-                )}
               </Box>
-            </TabPanel>
+              <Divider sx={{ my: 3 }} />
+            </>
+          )}
 
-            {/* Payments Tab */}
-            <TabPanel value={tabValue} index={1}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.payments.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Payment ID</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Method</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.payments.map((payment) => (
-                          <TableRow
-                            key={payment.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/payments/${payment.id}`)}
-                          >
-                            <TableCell>{payment.payment_id}</TableCell>
-                            <TableCell>
-                              {payment.created_at ? new Date(payment.created_at).toLocaleDateString() : '-'}
-                            </TableCell>
-                            <TableCell>{payment.payment_method}</TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(payment.amount || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No payments found
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Checks Tab */}
-            <TabPanel value={tabValue} index={2}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.checks.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Check Number</TableCell>
-                          <TableCell>Bank</TableCell>
-                          <TableCell>Due Date</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.checks.map((check) => (
-                          <TableRow
-                            key={check.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/checks/${check.id}`)}
-                          >
-                            <TableCell>{check.check_number}</TableCell>
-                            <TableCell>{check.bank_name}</TableCell>
-                            <TableCell>
-                              {check.due_date ? new Date(check.due_date).toLocaleDateString() : '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={check.status} size="small" />
-                            </TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(check.amount || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No checks found
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Footer */}
-            <Divider />
-            <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Created: {project.created_at ? new Date(project.created_at).toLocaleString() : 'N/A'}
-              </Typography>
-              {project.updated_at && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Last Updated: {new Date(project.updated_at).toLocaleString()}
+          {/* Description */}
+          {project.description && (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Description
                 </Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="body1">{project.description}</Typography>
+                </Paper>
+              </Box>
+              <Divider sx={{ my: 3 }} />
+            </>
+          )}
+
+          {/* Related Orders */}
+          {relatedData.orders.length > 0 && (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Related Orders ({relatedData.orders.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Order ID</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.orders.slice(0, 5).map((order) => (
+                        <TableRow
+                          key={order.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/orders/${order.id}`)}
+                        >
+                          <TableCell>{order.order_id}</TableCell>
+                          <TableCell>
+                            {order.order_date ? new Date(order.order_date).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={order.status} size="small" />
+                          </TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(order.final_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {relatedData.orders.length > 5 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Showing 5 of {relatedData.orders.length} orders
+                  </Typography>
+                )}
+              </Box>
+              <Divider sx={{ my: 3 }} />
+            </>
+          )}
+
+          {/* Related Payments */}
+          {relatedData.payments.length > 0 && (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Related Payments ({relatedData.payments.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Payment ID</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Method</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.payments.slice(0, 5).map((payment) => (
+                        <TableRow
+                          key={payment.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/payments/${payment.id}`)}
+                        >
+                          <TableCell>{payment.payment_id}</TableCell>
+                          <TableCell>
+                            {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>{payment.payment_method}</TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(payment.amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {relatedData.payments.length > 5 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Showing 5 of {relatedData.payments.length} payments
+                  </Typography>
+                )}
+              </Box>
+              <Divider sx={{ my: 3 }} />
+            </>
+          )}
+
+          {/* Related Checks */}
+          {relatedData.checks.length > 0 && (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Related Checks ({relatedData.checks.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Check Number</TableCell>
+                        <TableCell>Bank</TableCell>
+                        <TableCell>Due Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.checks.slice(0, 5).map((check) => (
+                        <TableRow
+                          key={check.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/checks/${check.id}`)}
+                        >
+                          <TableCell>{check.check_number}</TableCell>
+                          <TableCell>{check.bank_name}</TableCell>
+                          <TableCell>
+                            {check.due_date ? new Date(check.due_date).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={check.status} size="small" />
+                          </TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(check.amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {relatedData.checks.length > 5 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Showing 5 of {relatedData.checks.length} checks
+                  </Typography>
+                )}
+              </Box>
+              <Divider sx={{ my: 3 }} />
+            </>
+          )}
+
+          {/* Metadata */}
+          <Box>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Additional Information
+            </Typography>
+            <Grid container spacing={2}>
+              {project.created_by && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Created By:
+                  </Typography>
+                  <Typography variant="body1">
+                    {project.created_by.username || project.created_by.email}
+                  </Typography>
+                </Grid>
               )}
-            </Box>
-          </>
-        ) : (
-          <Alert severity="warning" sx={{ m: 2 }}>
-            Project not found
-          </Alert>
-        )}
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Created At:
+                </Typography>
+                <Typography variant="body1">
+                  {project.created_at ? new Date(project.created_at).toLocaleString() : 'N/A'}
+                </Typography>
+              </Grid>
+              {project.updated_at && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Last Updated:
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(project.updated_at).toLocaleString()}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Sync Status:
+                </Typography>
+                <Chip
+                  label={project.sync_status || 'SYNCED'}
+                  size="small"
+                  color={project.sync_status === 'SYNCED' ? 'success' : 'warning'}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Paper>
       </Box>
-    </Drawer>
+    </Box>
   );
 }
