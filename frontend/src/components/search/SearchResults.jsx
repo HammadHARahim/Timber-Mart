@@ -1,279 +1,417 @@
 // ============================================================================
-// Search Results Component - Displays results by entity type
+// Search Results Component - Unified Layout with Emoji Icons
+// Displays all results in a single, scannable view
 // ============================================================================
 
 import {
   Box,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Divider,
   Paper,
-  Badge,
+  Chip,
 } from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  People as PeopleIcon,
-  ShoppingCart as OrdersIcon,
-  Business as ProjectsIcon,
-  AttachMoney as PaymentsIcon,
-  Receipt as ChecksIcon,
-  QrCode as TokensIcon,
-  Inventory as ItemsIcon,
-} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-export default function SearchResults({ results }) {
+export default function SearchResults({ results, searchQuery }) {
   const navigate = useNavigate();
 
+  // Entity configurations with emojis
   const entityConfig = {
     customers: {
-      icon: <PeopleIcon />,
+      emoji: '👤',
       label: 'Customers',
       color: '#667eea',
-      columns: ['ID', 'Name', 'Phone', 'Email', 'Type'],
-      renderRow: (item) => [
-        item.customer_id,
-        item.name,
-        item.phone || '-',
-        item.email || '-',
-        <Chip label={item.customer_type} size="small" />
-      ]
+      renderItem: (item) => (
+        <Box
+          key={item.id}
+          sx={{
+            py: 1.5,
+            px: 2,
+            cursor: 'pointer',
+            borderRadius: 1,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+          onClick={() => navigate(`/customers/${item.id}`)}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Chip
+              label="👤 Customer"
+              size="small"
+              sx={{
+                bgcolor: '#667eea20',
+                color: '#667eea',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 20,
+              }}
+            />
+            <Typography variant="body1" fontWeight={600}>
+              {item.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+              {item.phone || item.email || ''}
+            </Typography>
+          </Box>
+          {item.balance > 0 && (
+            <Box sx={{ pl: 2 }}>
+              <Typography variant="body2" color="warning.main" fontWeight={500}>
+                Outstanding: Rs. {parseFloat(item.balance).toLocaleString()}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )
     },
     orders: {
-      icon: <OrdersIcon />,
+      emoji: '📦',
       label: 'Orders',
       color: '#f59e0b',
-      columns: ['Order ID', 'Customer', 'Date', 'Amount', 'Status'],
-      renderRow: (item) => {
-        const statusColors = {
-          'COMPLETED': 'success',
-          'CONFIRMED': 'info',
-          'PENDING': 'warning',
-          'CANCELLED': 'error',
-          'DRAFT': 'default'
+      renderItem: (item) => {
+        const statusEmoji = {
+          'COMPLETED': '✅',
+          'CONFIRMED': '✓',
+          'IN_PROGRESS': '🕓',
+          'PENDING': '⏳',
+          'CANCELLED': '❌',
+          'DRAFT': '📝'
         };
-        return [
-          item.order_id,
-          item.customer?.name || '-',
-          item.order_date ? new Date(item.order_date).toLocaleDateString() : '-',
-          `₨${parseFloat(item.final_amount || 0).toLocaleString()}`,
-          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
-        ];
-      }
-    },
-    projects: {
-      icon: <ProjectsIcon />,
-      label: 'Projects',
-      color: '#3b82f6',
-      columns: ['Project ID', 'Name', 'Customer', 'Status', 'Balance'],
-      renderRow: (item) => {
-        const statusColors = {
-          'COMPLETED': 'success',
-          'IN_PROGRESS': 'info',
-          'PENDING': 'warning',
-          'CANCELLED': 'error',
-          'ON_HOLD': 'default'
-        };
-        return [
-          item.project_id,
-          item.project_name,
-          item.customer?.name || '-',
-          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />,
-          `₨${parseFloat(item.balance || 0).toLocaleString()}`
-        ];
+        return (
+          <Box
+            key={item.id}
+            sx={{
+              py: 1.5,
+              px: 2,
+              cursor: 'pointer',
+              borderRadius: 1,
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              }
+            }}
+            onClick={() => navigate(`/orders/${item.id}`)}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Chip
+                label="📦 Order"
+                size="small"
+                sx={{
+                  bgcolor: '#f59e0b20',
+                  color: '#f59e0b',
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  height: 20,
+                }}
+              />
+              <Typography variant="body1" fontWeight={600}>
+                {item.order_id}
+              </Typography>
+              <Chip
+                label={`${statusEmoji[item.status] || ''} ${item.status}`}
+                size="small"
+                sx={{ height: 18, fontSize: '0.65rem' }}
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+                {item.customer?.name || 'N/A'}
+              </Typography>
+            </Box>
+            <Box sx={{ pl: 2, display: 'flex', gap: 2 }}>
+              {item.final_amount && (
+                <Typography variant="body2" color="text.secondary">
+                  Rs. {parseFloat(item.final_amount).toLocaleString()}
+                </Typography>
+              )}
+              {item.order_date && (
+                <Typography variant="body2" color="text.secondary">
+                  {new Date(item.order_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        );
       }
     },
     payments: {
-      icon: <PaymentsIcon />,
+      emoji: '💸',
       label: 'Payments',
       color: '#10b981',
-      columns: ['Payment ID', 'Customer', 'Amount', 'Method', 'Date'],
-      renderRow: (item) => {
-        const methodLabels = {
-          'CASH': 'Cash',
-          'CHECK': 'Check',
-          'BANK_TRANSFER': 'Bank Transfer',
-          'ONLINE': 'Online'
-        };
-        return [
-          item.payment_id,
-          item.customer?.name || '-',
-          `₨${parseFloat(item.amount || 0).toLocaleString()}`,
-          methodLabels[item.payment_method] || item.payment_method || '-',
-          item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'
-        ];
-      }
+      renderItem: (item) => (
+        <Box
+          key={item.id}
+          sx={{
+            py: 1.5,
+            px: 2,
+            cursor: 'pointer',
+            borderRadius: 1,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+          onClick={() => navigate(`/payments/${item.id}`)}
+        >
+          <Typography variant="body1" fontWeight={500}>
+            • Payment {item.payment_id} | Rs. {parseFloat(item.amount || 0).toLocaleString()} |
+            Date: {item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'} |
+            By: {item.customer?.name || 'N/A'}
+          </Typography>
+          {item.payment_method && (
+            <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
+              Method: {item.payment_method.replace('_', ' ')}
+            </Typography>
+          )}
+        </Box>
+      )
     },
     checks: {
-      icon: <ChecksIcon />,
+      emoji: '🧾',
       label: 'Checks',
       color: '#8b5cf6',
-      columns: ['Check ID', 'Check Number', 'Bank', 'Amount', 'Status'],
-      renderRow: (item) => {
-        const statusColors = {
-          'CLEARED': 'success',
-          'PENDING': 'warning',
-          'BOUNCED': 'error',
-          'CANCELLED': 'default'
-        };
-        return [
-          item.check_id,
-          item.check_number,
-          item.bank_name || '-',
-          `₨${parseFloat(item.amount || 0).toLocaleString()}`,
-          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
-        ];
-      }
+      renderItem: (item) => (
+        <Box
+          key={item.id}
+          sx={{
+            py: 1.5,
+            px: 2,
+            cursor: 'pointer',
+            borderRadius: 1,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+          onClick={() => navigate(`/checks/${item.id}`)}
+        >
+          <Typography variant="body1" fontWeight={500}>
+            • Check {item.check_id} | Rs. {parseFloat(item.amount || 0).toLocaleString()} |
+            Due: {item.due_date ? new Date(item.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'} |
+            Bank: {item.bank_name || 'N/A'}
+          </Typography>
+          <Box sx={{ pl: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Check Number: {item.check_number || 'N/A'}
+            </Typography>
+            {item.status && (
+              <Chip
+                label={item.status}
+                size="small"
+                color={
+                  item.status === 'CLEARED' ? 'success' :
+                  item.status === 'PENDING' ? 'warning' :
+                  item.status === 'BOUNCED' ? 'error' : 'default'
+                }
+              />
+            )}
+          </Box>
+        </Box>
+      )
     },
-    tokens: {
-      icon: <TokensIcon />,
-      label: 'Tokens',
-      color: '#ef4444',
-      columns: ['Token ID', 'Customer', 'Vehicle', 'Driver', 'Status'],
-      renderRow: (item) => {
-        const statusColors = {
-          'COMPLETED': 'success',
-          'IN_TRANSIT': 'info',
-          'PENDING': 'warning',
-          'CANCELLED': 'error'
+    projects: {
+      emoji: '🏗️',
+      label: 'Projects',
+      color: '#3b82f6',
+      renderItem: (item) => {
+        const statusEmoji = {
+          'COMPLETED': '✅',
+          'IN_PROGRESS': '🔨',
+          'PENDING': '⏳',
+          'ON_HOLD': '⏸️',
+          'CANCELLED': '❌'
         };
-        return [
-          item.token_id,
-          item.customer_name || '-',
-          item.vehicle_number || '-',
-          item.driver_name || '-',
-          <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
-        ];
+        return (
+          <Box
+            key={item.id}
+            sx={{
+              py: 1.5,
+              px: 2,
+              cursor: 'pointer',
+              borderRadius: 1,
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              }
+            }}
+            onClick={() => navigate(`/projects/${item.id}`)}
+          >
+            <Typography variant="body1" fontWeight={500}>
+              • Project: "{item.project_name || item.name}" | Status: {statusEmoji[item.status] || '•'} {item.status}
+            </Typography>
+            <Box sx={{ pl: 2, display: 'flex', gap: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Customer: {item.customer?.name || 'N/A'}
+              </Typography>
+              {item.balance && (
+                <Typography variant="body2" color="warning.main">
+                  Balance: Rs. {parseFloat(item.balance).toLocaleString()}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        );
       }
     },
     items: {
-      icon: <ItemsIcon />,
+      emoji: '🪵',
       label: 'Items',
       color: '#f97316',
-      columns: ['Item ID', 'Name', 'Name (Urdu)', 'Category', 'Price'],
-      renderRow: (item) => [
-        item.item_id,
-        item.name || '-',
-        item.name_urdu || '-',
-        item.category || '-',
-        `₨${parseFloat(item.default_price || 0).toLocaleString()}`
-      ]
+      renderItem: (item) => (
+        <Box
+          key={item.id}
+          sx={{
+            py: 1.5,
+            px: 2,
+            cursor: 'pointer',
+            borderRadius: 1,
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            }
+          }}
+          onClick={() => navigate(`/items/${item.id}`)}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body1" fontWeight={500}>
+              • {item.name} {item.name_urdu && `(${item.name_urdu})`}
+            </Typography>
+            <Typography variant="body2" color="primary.main" fontWeight={600}>
+              Rs. {parseFloat(item.default_price || 0).toLocaleString()} / piece
+            </Typography>
+          </Box>
+          {(item.stock_quantity !== undefined || item.category) && (
+            <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
+              {item.stock_quantity !== undefined && `Stock: ${item.stock_quantity} pcs`}
+              {item.category && ` | Category: ${item.category}`}
+            </Typography>
+          )}
+        </Box>
+      )
+    },
+    tokens: {
+      emoji: '🪙',
+      label: 'Tokens',
+      color: '#ef4444',
+      renderItem: (item) => {
+        const statusEmoji = {
+          'COMPLETED': '✅',
+          'IN_TRANSIT': '🚛',
+          'PENDING': '⏳',
+          'CANCELLED': '❌'
+        };
+        return (
+          <Box
+            key={item.id}
+            sx={{
+              py: 1.5,
+              px: 2,
+              cursor: 'pointer',
+              borderRadius: 1,
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              }
+            }}
+            onClick={() => navigate(`/tokens/${item.id}`)}
+          >
+            <Typography variant="body1" fontWeight={500}>
+              • Token {item.token_id} | Linked Order: {item.order?.order_id || 'N/A'} |
+              Customer: {item.customer_name || item.customer?.name || 'N/A'}
+            </Typography>
+            <Box sx={{ pl: 2, display: 'flex', gap: 2 }}>
+              {item.vehicle_number && (
+                <Typography variant="body2" color="text.secondary">
+                  Vehicle: {item.vehicle_number}
+                </Typography>
+              )}
+              {item.driver_name && (
+                <Typography variant="body2" color="text.secondary">
+                  Driver: {item.driver_name}
+                </Typography>
+              )}
+              {item.status && (
+                <Typography variant="body2" color="text.secondary">
+                  Status: {statusEmoji[item.status] || '•'} {item.status}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        );
+      }
     },
   };
 
+  // Count total results
+  const totalResults = Object.entries(results)
+    .filter(([key]) => key !== 'summary')
+    .reduce((sum, [, items]) => sum + (Array.isArray(items) ? items.length : 0), 0);
+
+  if (totalResults === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          No results found
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Try adjusting your search query or filters
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      {Object.entries(results).map(([entityType, items]) => {
-        if (entityType === 'summary' || !items || items.length === 0) return null;
+      {/* Results Header */}
+      <Box sx={{ mb: 2, pb: 1, borderBottom: 2, borderColor: 'divider' }}>
+        <Typography variant="h6" fontWeight={600} color="text.secondary">
+          RESULTS FOR: "{searchQuery}"
+        </Typography>
+      </Box>
 
-        const config = entityConfig[entityType];
-        if (!config) return null;
+      {/* Unified Results List - All entities mixed together */}
+      <Box>
+        {(() => {
+          // Flatten all results into a single array with metadata
+          const allResults = [];
 
-        return (
-          <Accordion key={entityType} defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    bgcolor: `${config.color}20`,
-                    color: config.color,
-                  }}
-                >
-                  {config.icon}
-                </Box>
-                <Typography variant="h6" fontWeight={600}>
-                  {config.label}
-                </Typography>
-                <Badge badgeContent={items.length} color="primary" sx={{ ml: 'auto', mr: 2 }} />
+          Object.entries(entityConfig).forEach(([entityType, config]) => {
+            const items = results[entityType];
+
+            if (items && Array.isArray(items) && items.length > 0) {
+              items.forEach((item) => {
+                allResults.push({
+                  entityType,
+                  config,
+                  data: item,
+                });
+              });
+            }
+          });
+
+          // If no results, show empty state
+          if (allResults.length === 0) {
+            return null;
+          }
+
+          // Render unified list
+          return allResults.map((result, idx) => {
+            const { entityType, config, data } = result;
+            return (
+              <Box key={`${entityType}-${data.id || idx}`}>
+                {config.renderItem(data)}
+                {idx < allResults.length - 1 && <Divider sx={{ mx: 0 }} />}
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      {config.columns.map((col, idx) => (
-                        <TableCell key={idx} sx={{ fontWeight: 600 }}>
-                          {col}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {items.map((item, idx) => {
-                      const rowData = config.renderRow(item);
-                      return (
-                        <TableRow
-                          key={idx}
-                          hover
-                          sx={{
-                            cursor: 'pointer',
-                            '&:hover': { bgcolor: 'action.hover' }
-                          }}
-                          onClick={() => {
-                            // Navigate to specific record detail page
-                            const getDetailRoute = () => {
-                              switch (entityType) {
-                                case 'customers':
-                                  return `/customers/${item.id}`;
-                                case 'orders':
-                                  return `/orders/${item.id}`;
-                                case 'projects':
-                                  return `/projects/${item.id}`;
-                                case 'payments':
-                                  return `/payments/${item.id}`;
-                                case 'checks':
-                                  return `/checks/${item.id}`;
-                                case 'tokens':
-                                  return `/tokens/${item.id}`;
-                                case 'items':
-                                  return `/items/${item.id}`;
-                                default:
-                                  return `/${entityType}`;
-                              }
-                            };
-                            navigate(getDetailRoute());
-                          }}
-                        >
-                          {rowData.map((cell, cellIdx) => (
-                            <TableCell key={cellIdx}>{cell}</TableCell>
-                          ))}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+            );
+          });
+        })()}
+      </Box>
 
-      {/* No results */}
-      {Object.values(results).every(v => !Array.isArray(v) || v.length === 0) && (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography variant="h6" color="text.secondary">
-            No results found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Try adjusting your search query or filters
-          </Typography>
-        </Box>
-      )}
+      {/* See All Results Button */}
+      <Box sx={{ mt: 3, pt: 2, borderTop: 2, borderColor: 'divider', textAlign: 'center' }}>
+        <Typography variant="body2" color="primary" sx={{ cursor: 'pointer', fontWeight: 500 }}>
+          Showing all {totalResults} results
+        </Typography>
+      </Box>
     </Box>
   );
 }

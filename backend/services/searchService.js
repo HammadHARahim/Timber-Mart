@@ -72,18 +72,20 @@ class SearchService {
     };
 
     // Search Customers
-    if (entities.includes('customers') && query) {
+    if (entities.includes('customers')) {
       try {
+        const whereClause = { ...dateFilter };
+        if (query) {
+          whereClause[Op.or] = [
+            getSearchPattern('name', query),
+            getSearchPattern('phone', query),
+            getSearchPattern('email', query),
+            getSearchPattern('customer_id', query)
+          ];
+        }
+
         const customers = await Customer.findAll({
-          where: {
-            [Op.or]: [
-              getSearchPattern('name', query),
-              getSearchPattern('phone', query),
-              getSearchPattern('email', query),
-              getSearchPattern('customer_id', query)
-            ],
-            ...dateFilter
-          },
+          where: whereClause,
           limit: parseInt(limit),
           order: [['created_at', 'DESC']]
         });

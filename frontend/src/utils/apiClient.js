@@ -21,6 +21,7 @@ export async function apiRequest(endpoint, options = {}) {
     method = 'GET',
     body = null,
     headers = {},
+    params = null,
     requiresAuth = true,
     retries = 0
   } = options;
@@ -31,6 +32,8 @@ export async function apiRequest(endpoint, options = {}) {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
       ...headers,
       ...(requiresAuth && token ? { 'Authorization': `Bearer ${token}` } : {})
     }
@@ -40,7 +43,17 @@ export async function apiRequest(endpoint, options = {}) {
     config.body = JSON.stringify(body);
   }
 
-  const url = `${API_URL}${endpoint}`;
+  // Build URL with query parameters
+  let url = `${API_URL}${endpoint}`;
+  if (params && method === 'GET') {
+    const queryString = Object.entries(params)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+  }
 
   try {
     const response = await fetch(url, config);

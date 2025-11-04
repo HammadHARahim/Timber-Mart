@@ -2,7 +2,7 @@
 // Main Layout - Material UI Version with Drawer
 // ============================================================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -23,6 +23,7 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -45,6 +46,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useOffline } from '../../context/OfflineContext';
+import CommandPalette from './CommandPalette';
 
 const drawerWidth = 260;
 
@@ -74,11 +76,31 @@ export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   const { user, logout } = useAuth();
   const { isOnline } = useOffline();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Global keyboard shortcuts for command palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd+K or Ctrl+K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      }
+      // Forward slash (/) - but only if not typing in input
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleDrawerToggle = () => {
     if (isMobile) {
@@ -371,6 +393,25 @@ export default function MainLayout() {
 
           <Box sx={{ flexGrow: 1 }} />
 
+          {/* Search Button with Keyboard Hint */}
+          <Tooltip title="Quick Search (⌘K or /)">
+            <Chip
+              icon={<SearchIcon sx={{ fontSize: 16 }} />}
+              label="⌘K"
+              onClick={() => setCommandPaletteOpen(true)}
+              clickable
+              sx={{
+                mr: 2,
+                bgcolor: 'action.hover',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                '&:hover': {
+                  bgcolor: 'action.selected',
+                },
+              }}
+            />
+          </Tooltip>
+
           {/* Connection Status */}
           <Chip
             label={isOnline ? 'Online' : 'Offline'}
@@ -486,6 +527,12 @@ export default function MainLayout() {
         <Toolbar /> {/* Spacer for AppBar */}
         <Outlet />
       </Box>
+
+      {/* Command Palette - Global Search (⌘K) */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </Box>
   );
 }

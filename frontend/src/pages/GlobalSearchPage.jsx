@@ -93,6 +93,20 @@ export default function GlobalSearchPage() {
 
   // Debounce timer ref
   const debounceTimer = useRef(null);
+  const searchInputRef = useRef(null);
+
+  // Keyboard shortcut (Cmd+K or Ctrl+K) to focus search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Load saved searches and history from localStorage
   useEffect(() => {
@@ -129,9 +143,22 @@ export default function GlobalSearchPage() {
 
   // Handle search
   const handleSearch = useCallback(async (isLiveSearch = false) => {
-    if (!searchQuery.trim() && !hasActiveFilters()) {
+    // REQUIRE search query - don't search with empty query
+    if (!searchQuery.trim()) {
       if (!isLiveSearch) {
-        setError('Please enter a search query or apply filters');
+        setError('Please enter a search query');
+      }
+      setSearchResults(null);
+      return;
+    }
+
+    // Build query parameters
+    const entitiesParam = Object.keys(selectedEntities).filter(k => selectedEntities[k]).join(',');
+
+    // REQUIRE at least one entity to be selected
+    if (!entitiesParam) {
+      if (!isLiveSearch) {
+        setError('Please select at least one entity type to search in');
       }
       setSearchResults(null);
       return;
@@ -141,11 +168,10 @@ export default function GlobalSearchPage() {
     setError(null);
 
     try {
-      // Build query parameters
       const params = {
         q: searchQuery.trim(),
-        searchMode: searchMode, // Pass search mode to backend
-        entities: Object.keys(selectedEntities).filter(k => selectedEntities[k]).join(','),
+        searchMode: searchMode,
+        entities: entitiesParam,
         ...filters
       };
 
@@ -201,7 +227,7 @@ export default function GlobalSearchPage() {
       clearTimeout(debounceTimer.current);
     }
 
-    // Set new timer for debounced search
+    // ONLY search if there's a query - don't search on filter changes alone
     if (searchQuery.trim()) {
       debounceTimer.current = setTimeout(() => {
         handleSearch(true); // true indicates live search
@@ -248,11 +274,18 @@ export default function GlobalSearchPage() {
         return;
     }
 
-    setFilters(prev => ({
-      ...prev,
+    const newFilters = {
+      ...filters,
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0],
-    }));
+    };
+
+    setFilters(newFilters);
+
+    // Auto-trigger search if not in live search mode
+    if (!liveSearch) {
+      setTimeout(() => handleSearch(), 100);
+    }
   };
 
   // Handle entity toggle
@@ -390,47 +423,63 @@ export default function GlobalSearchPage() {
       {/* Search Input */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} md={9}>
             <TextField
               fullWidth
-              placeholder="Search customers, orders, projects, payments, checks, tokens, items..."
+              inputRef={searchInputRef}
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon sx={{ fontSize: 28 }} />
                   </InputAdornment>
                 ),
-                endAdornment: searchQuery && (
+                endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
-                      <ClearIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      {searchQuery && (
+                        <IconButton size="small" onClick={() => setSearchQuery('')}>
+                          <ClearIcon />
+                        </IconButton>
+                      )}
+                      <Chip
+                        label="⌘K"
+                        size="small"
+                        sx={{
+                          height: 24,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          bgcolor: 'action.selected',
+                          cursor: 'help'
+                        }}
+                      />
+                    </Box>
                   </InputAdornment>
                 ),
               }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1.1rem',
+                  py: 1
+                }
+              }}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                startIcon={loading ? null : <SearchIcon />}
-                onClick={handleSearch}
-                disabled={loading}
-              >
-                {loading ? 'Searching...' : 'Search'}
-              </Button>
-              <Tooltip title="Refresh">
-                <IconButton onClick={handleSearch} disabled={loading}>
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+          <Grid item xs={12} md={3}>
+            <Button
+              fullWidth
+              variant="contained"
+              size="large"
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+              onClick={() => handleSearch()}
+              disabled={loading}
+              sx={{ height: '56px' }}
+            >
+              {loading ? 'Searching...' : 'Search'}
+            </Button>
           </Grid>
         </Grid>
 
@@ -462,25 +511,43 @@ export default function GlobalSearchPage() {
                 size="small"
               />
             }
-            label={<Typography variant="body2">Live Search</Typography>}
+            label={<Typography variant="body2">Live Search (Auto-search as you type)</Typography>}
           />
         </Box>
 
         {/* Quick Filters */}
-        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mr: 1, alignSelf: 'center' }}>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
             Quick Filters:
           </Typography>
-          <Chip label="Today" onClick={() => applyQuickFilter('today')} />
-          <Chip label="This Week" onClick={() => applyQuickFilter('thisWeek')} />
-          <Chip label="This Month" onClick={() => applyQuickFilter('thisMonth')} />
           <Chip
-            label="Clear All"
-            color="error"
-            variant="outlined"
-            onClick={clearFilters}
-            sx={{ ml: 'auto' }}
+            label="Today"
+            onClick={() => applyQuickFilter('today')}
+            clickable
+            variant={filters.startDate && filters.startDate === new Date().toISOString().split('T')[0] ? 'filled' : 'outlined'}
           />
+          <Chip
+            label="This Week"
+            onClick={() => applyQuickFilter('thisWeek')}
+            clickable
+            variant="outlined"
+          />
+          <Chip
+            label="This Month"
+            onClick={() => applyQuickFilter('thisMonth')}
+            clickable
+            variant="outlined"
+          />
+          {hasActiveFilters() && (
+            <Chip
+              label="Clear Filters"
+              color="error"
+              variant="outlined"
+              onClick={clearFilters}
+              onDelete={clearFilters}
+              deleteIcon={<ClearIcon />}
+            />
+          )}
         </Box>
       </Paper>
 
@@ -582,6 +649,28 @@ export default function GlobalSearchPage() {
                 <MenuItem value="COMPLETED">Completed</MenuItem>
                 <MenuItem value="CANCELLED">Cancelled</MenuItem>
               </TextField>
+            </Grid>
+
+            {/* Apply Filters Button */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ClearIcon />}
+                  onClick={clearFilters}
+                  disabled={!hasActiveFilters() && Object.values(selectedEntities).every(v => v)}
+                >
+                  Reset All
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<SearchIcon />}
+                  onClick={() => handleSearch()}
+                  disabled={loading}
+                >
+                  Apply Filters & Search
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </AccordionDetails>
@@ -741,12 +830,13 @@ export default function GlobalSearchPage() {
       {/* Search Results */}
       {searchResults && (
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" fontWeight={600}>
-              Search Results ({searchResults.summary.totalResults} found)
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              {searchResults.summary.totalResults} {searchResults.summary.totalResults === 1 ? 'result' : 'results'} found
             </Typography>
             <Button
               variant="outlined"
+              size="small"
               startIcon={<DownloadIcon />}
               onClick={exportResults}
               disabled={searchResults.summary.totalResults === 0}
@@ -755,7 +845,7 @@ export default function GlobalSearchPage() {
             </Button>
           </Box>
 
-          <SearchResults results={searchResults} />
+          <SearchResults results={searchResults} searchQuery={searchQuery} />
         </Paper>
       )}
 

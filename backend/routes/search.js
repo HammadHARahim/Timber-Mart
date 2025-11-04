@@ -18,6 +18,11 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res) => {
   try {
+    // Disable caching for search results
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const { q, entities, startDate, endDate, minAmount, maxAmount, status, searchMode, limit } = req.query;
 
     const filters = {
