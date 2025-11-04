@@ -1,20 +1,19 @@
 // ============================================================================
-// Customer Detail Page - Drawer-based detail view with comprehensive info
+// Customer Detail Page - Matches OrderDetail visual pattern
 // ============================================================================
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Drawer,
   Box,
-  Typography,
-  IconButton,
-  Divider,
-  Grid,
+  Button,
   Card,
   CardContent,
   Chip,
-  Button,
+  Divider,
+  Grid,
+  Paper,
+  Typography,
   CircularProgress,
   Alert,
   Table,
@@ -23,34 +22,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Tab,
-  Tabs,
 } from '@mui/material';
 import {
-  Close as CloseIcon,
+  ArrowBack as BackIcon,
   Edit as EditIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   LocationOn as LocationIcon,
-  Person as PersonIcon,
   Business as BusinessIcon,
-  AccountBalance as BalanceIcon,
 } from '@mui/icons-material';
 import { api } from '../utils/apiClient';
-
-function TabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`customer-tabpanel-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 export default function CustomerDetailPage() {
   const { id } = useParams();
@@ -59,7 +40,6 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
   const [relatedData, setRelatedData] = useState({
     orders: [],
     projects: [],
@@ -77,7 +57,6 @@ export default function CustomerDetailPage() {
     setError(null);
 
     try {
-      // Fetch customer details
       const customerRes = await api.get(`/api/customers/${id}`);
       if (customerRes.success) {
         setCustomer(customerRes.data);
@@ -104,344 +83,430 @@ export default function CustomerDetailPage() {
   };
 
   const handleClose = () => {
-    // Navigate back to customers list
     navigate('/customers');
   };
 
   const handleEdit = () => {
-    // Navigate to edit mode (you can implement this later)
-    navigate(`/customers/edit/${id}`);
+    // Navigate back to list with edit mode (you can implement this)
+    navigate('/customers', { state: { editCustomerId: id } });
   };
 
-  return (
-    <Drawer
-      anchor="right"
-      open={true}
-      onClose={handleClose}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: '90%', md: '70%', lg: '50%' },
-          maxWidth: 800,
-        },
-      }}
-    >
-      {/* Header */}
+  if (loading) {
+    return (
       <Box
         sx={{
-          p: 2,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
+          justifyContent: 'center',
+          zIndex: 1300,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonIcon />
-          <Typography variant="h6" fontWeight={600}>
-            Customer Details
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton onClick={handleEdit} sx={{ color: 'inherit' }}>
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={handleClose} sx={{ color: 'inherit' }}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
+        <CircularProgress />
       </Box>
+    );
+  }
 
-      {/* Content */}
-      <Box sx={{ height: '100%', overflow: 'auto' }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {error}
-          </Alert>
-        ) : customer ? (
-          <>
-            {/* Basic Info Section */}
-            <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
-                <Box>
-                  <Typography variant="h5" fontWeight={700} gutterBottom>
-                    {customer.name}
-                  </Typography>
-                  <Chip
-                    label={customer.customer_type || 'REGULAR'}
-                    size="small"
-                    color={customer.customer_type === 'VIP' ? 'success' : 'default'}
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={customer.customer_id}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    Balance
-                  </Typography>
-                  <Typography variant="h6" color={customer.balance > 0 ? 'error.main' : 'success.main'}>
-                    Rs. {parseFloat(customer.balance || 0).toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
+  if (error || !customer) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300,
+          p: 2,
+        }}
+        onClick={handleClose}
+      >
+        <Alert severity="error">{error || 'Customer not found'}</Alert>
+      </Box>
+    );
+  }
 
-              {/* Contact Info Grid */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                {customer.phone && (
-                  <Grid item xs={12} sm={6}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <PhoneIcon color="primary" fontSize="small" />
-                          <Typography variant="caption" color="text.secondary">
-                            Phone
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" fontWeight={600}>
-                          {customer.phone}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-
-                {customer.email && (
-                  <Grid item xs={12} sm={6}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <EmailIcon color="primary" fontSize="small" />
-                          <Typography variant="caption" color="text.secondary">
-                            Email
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" fontWeight={600}>
-                          {customer.email}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-
-                {customer.address && (
-                  <Grid item xs={12}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <LocationIcon color="primary" fontSize="small" />
-                          <Typography variant="caption" color="text.secondary">
-                            Address
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1">
-                          {customer.address}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-
-                {customer.business_name && (
-                  <Grid item xs={12}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <BusinessIcon color="primary" fontSize="small" />
-                          <Typography variant="caption" color="text.secondary">
-                            Business Name
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" fontWeight={600}>
-                          {customer.business_name}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-              </Grid>
-
-              {/* Notes */}
-              {customer.notes && (
-                <Card variant="outlined" sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Notes
-                    </Typography>
-                    <Typography variant="body2">{customer.notes}</Typography>
-                  </CardContent>
-                </Card>
-              )}
-            </Box>
-
-            <Divider />
-
-            {/* Tabs for Related Data */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-                <Tab label={`Orders (${relatedData.orders.length})`} />
-                <Tab label={`Projects (${relatedData.projects.length})`} />
-                <Tab label={`Payments (${relatedData.payments.length})`} />
-              </Tabs>
-            </Box>
-
-            {/* Orders Tab */}
-            <TabPanel value={tabValue} index={0}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.orders.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Order ID</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.orders.map((order) => (
-                          <TableRow
-                            key={order.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/orders/${order.id}`)}
-                          >
-                            <TableCell>{order.order_id}</TableCell>
-                            <TableCell>
-                              {order.order_date ? new Date(order.order_date).toLocaleDateString() : '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={order.status} size="small" />
-                            </TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(order.final_amount || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No orders found
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Projects Tab */}
-            <TabPanel value={tabValue} index={1}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.projects.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Project Name</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell align="right">Balance</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.projects.map((project) => (
-                          <TableRow
-                            key={project.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/projects/${project.id}`)}
-                          >
-                            <TableCell>{project.project_name}</TableCell>
-                            <TableCell>
-                              <Chip label={project.status} size="small" />
-                            </TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(project.balance || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No projects found
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Payments Tab */}
-            <TabPanel value={tabValue} index={2}>
-              <Box sx={{ px: 3 }}>
-                {relatedData.payments.length > 0 ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Payment ID</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Method</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {relatedData.payments.map((payment) => (
-                          <TableRow
-                            key={payment.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => navigate(`/payments/${payment.id}`)}
-                          >
-                            <TableCell>{payment.payment_id}</TableCell>
-                            <TableCell>
-                              {payment.created_at ? new Date(payment.created_at).toLocaleDateString() : '-'}
-                            </TableCell>
-                            <TableCell>{payment.payment_method}</TableCell>
-                            <TableCell align="right">
-                              Rs. {parseFloat(payment.amount || 0).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Typography color="text.secondary" align="center">
-                    No payments found
-                  </Typography>
-                )}
-              </Box>
-            </TabPanel>
-
-            {/* Footer with Audit Info */}
-            <Divider />
-            <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Created: {customer.created_at ? new Date(customer.created_at).toLocaleString() : 'N/A'}
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1300,
+        p: 2,
+      }}
+      onClick={handleClose}
+    >
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          maxWidth: 1200,
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: 24,
+          '&::-webkit-scrollbar': {
+            width: '10px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+            margin: '8px 0',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.400',
+            borderRadius: '10px',
+            border: '2px solid',
+            borderColor: 'background.paper',
+            '&:hover': {
+              bgcolor: 'grey.600',
+            },
+          },
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Paper elevation={0} sx={{ p: 4 }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Customer Details
               </Typography>
-              {customer.updated_at && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Last Updated: {new Date(customer.updated_at).toLocaleString()}
-                </Typography>
-              )}
+              <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                {customer.customer_id}
+              </Typography>
             </Box>
-          </>
-        ) : (
-          <Alert severity="warning" sx={{ m: 2 }}>
-            Customer not found
-          </Alert>
-        )}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="outlined"
+                startIcon={<BackIcon />}
+                onClick={handleClose}
+              >
+                Back
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={handleEdit}
+              >
+                Edit
+              </Button>
+            </Box>
+          </Box>
+          <Divider sx={{ mb: 3 }} />
+
+          {/* Customer Information */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Customer Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Name:
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {customer.name}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Type:
+                </Typography>
+                <Chip
+                  label={customer.customer_type || 'REGULAR'}
+                  size="small"
+                  color={customer.customer_type === 'VIP' ? 'success' : 'default'}
+                />
+              </Grid>
+              {customer.phone && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <PhoneIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                    Phone:
+                  </Typography>
+                  <Typography variant="body1">
+                    {customer.phone}
+                  </Typography>
+                </Grid>
+              )}
+              {customer.email && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <EmailIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                    Email:
+                  </Typography>
+                  <Typography variant="body1">
+                    {customer.email}
+                  </Typography>
+                </Grid>
+              )}
+              {customer.business_name && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <BusinessIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                    Business Name:
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {customer.business_name}
+                  </Typography>
+                </Grid>
+              )}
+              {customer.address && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    <LocationIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                    Address:
+                  </Typography>
+                  <Typography variant="body1">
+                    {customer.address}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Financial Summary */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Financial Summary
+            </Typography>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+              <CardContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Current Balance:
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color={parseFloat(customer.balance || 0) > 0 ? 'error.main' : 'success.main'}
+                    >
+                      Rs. {parseFloat(customer.balance || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Orders:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {relatedData.orders.length}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Total Projects:
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {relatedData.projects.length}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* Notes */}
+          {customer.notes && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Notes
+                </Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="body1">{customer.notes}</Typography>
+                </Paper>
+              </Box>
+            </>
+          )}
+
+          {/* Related Orders */}
+          {relatedData.orders.length > 0 && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Recent Orders ({relatedData.orders.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Order ID</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.orders.slice(0, 5).map((order) => (
+                        <TableRow
+                          key={order.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/orders/${order.id}`)}
+                        >
+                          <TableCell>{order.order_id}</TableCell>
+                          <TableCell>
+                            {order.order_date ? new Date(order.order_date).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={order.status} size="small" />
+                          </TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(order.final_amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
+          )}
+
+          {/* Related Projects */}
+          {relatedData.projects.length > 0 && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Projects ({relatedData.projects.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Project Name</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Balance</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.projects.slice(0, 5).map((project) => (
+                        <TableRow
+                          key={project.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/projects/${project.id}`)}
+                        >
+                          <TableCell>{project.project_name}</TableCell>
+                          <TableCell>
+                            <Chip label={project.status} size="small" />
+                          </TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(project.balance || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
+          )}
+
+          {/* Related Payments */}
+          {relatedData.payments.length > 0 && (
+            <>
+              <Divider sx={{ my: 3 }} />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Recent Payments ({relatedData.payments.length})
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Payment ID</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Method</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedData.payments.slice(0, 5).map((payment) => (
+                        <TableRow
+                          key={payment.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/payments/${payment.id}`)}
+                        >
+                          <TableCell>{payment.payment_id}</TableCell>
+                          <TableCell>
+                            {payment.created_at ? new Date(payment.created_at).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>{payment.payment_method}</TableCell>
+                          <TableCell align="right">
+                            Rs. {parseFloat(payment.amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
+          )}
+
+          {/* Metadata */}
+          <Divider sx={{ my: 3 }} />
+          <Box>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Additional Information
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Created At:
+                </Typography>
+                <Typography variant="body1">
+                  {customer.created_at ? new Date(customer.created_at).toLocaleString() : 'N/A'}
+                </Typography>
+              </Grid>
+              {customer.updated_at && (
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Last Updated:
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(customer.updated_at).toLocaleString()}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Sync Status:
+                </Typography>
+                <Chip
+                  label={customer.sync_status || 'SYNCED'}
+                  size="small"
+                  color={customer.sync_status === 'SYNCED' ? 'success' : 'warning'}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Paper>
       </Box>
-    </Drawer>
+    </Box>
   );
 }
