@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -26,11 +27,13 @@ import {
   Check as ClearIcon,
   Warning as BounceIcon,
   Cancel as CancelIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import checkService from '../services/checkService';
 import CheckForm from '../components/checks/CheckForm';
 
 export default function ChecksPage() {
+  const navigate = useNavigate();
   const [checks, setChecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -324,6 +327,15 @@ export default function ChecksPage() {
     onSortingChange: setSorting,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="View Details">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => navigate(`/checks/${row.original.id}`)}
+          >
+            <ViewIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         {row.original.status === 'PENDING' && (
           <>
             <Tooltip title="Clear Check">

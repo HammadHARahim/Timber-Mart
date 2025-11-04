@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -21,12 +22,14 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import projectService from '../services/projectService';
 import ProjectForm from '../components/projects/ProjectForm';
 import { formatBalance } from '../utils/formatters';
 
 export default function ProjectsPage() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -257,6 +260,15 @@ export default function ProjectsPage() {
     onSortingChange: setSorting,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="View Details">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => navigate(`/projects/${row.original.id}`)}
+          >
+            <ViewIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Edit">
           <IconButton
             size="small"

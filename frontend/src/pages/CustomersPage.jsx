@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -21,6 +22,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useCustomer } from '../hooks/useCustomer';
@@ -28,6 +30,7 @@ import CustomerForm from '../components/features/CustomerForm';
 import { formatBalance } from '../utils/formatters';
 
 export default function CustomersPage() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -207,6 +210,15 @@ export default function CustomersPage() {
     onSortingChange: setSorting,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="View Details">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => navigate(`/customers/${row.original.id}`)}
+          >
+            <ViewIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         {hasPermission('customer.edit') && (
           <Tooltip title="Edit">
             <IconButton

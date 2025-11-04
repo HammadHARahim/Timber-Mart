@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -23,11 +24,13 @@ import {
   Refresh as RefreshIcon,
   Check as ApproveIcon,
   Close as RejectIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import paymentService from '../services/paymentService';
 import PaymentForm from '../components/payments/PaymentForm';
 
 export default function PaymentsPage() {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -286,6 +289,15 @@ export default function PaymentsPage() {
     onSortingChange: setSorting,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="View Details">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => navigate(`/payments/${row.original.id}`)}
+          >
+            <ViewIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         {row.original.status === 'PENDING' && (
           <>
             <Tooltip title="Approve">
